@@ -170,7 +170,50 @@ function parseItinerary(text) {
   return result;
 }
 
+function parseHotelItinerary(text) {
+  const itinerary = parseItinerary(text);
+
+  itinerary.summaryNotes = [];
+  itinerary.days = itinerary.days
+    .filter((day) => Boolean(day.accommodation))
+    .map((day, index) => ({
+      number: day.number || index + 1,
+      date: day.date,
+      location: day.location,
+      accommodation: day.accommodation,
+      activities: [],
+      transfers: [],
+      flights: [],
+      meals: [],
+      notes: []
+    }));
+
+  if (itinerary.days.length) {
+    itinerary.startDate = itinerary.startDate || itinerary.days[0].date || "";
+    itinerary.endDate = itinerary.endDate || itinerary.days[itinerary.days.length - 1].date || "";
+    return itinerary;
+  }
+
+  const lines = text.replace(/\r\n/g, "\n").split("\n").map((line) => line.trim()).filter(Boolean);
+  for (const line of lines) {
+    const topLevel = line.match(/^(client|traveler|traveller|guest|trip|title|start|start date|end|end date)\s*:\s*(.+)$/i);
+    if (topLevel) continue;
+
+    const hotel = line.match(/^(?:hotel|accommodation|lodge|camp)\s*:\s*(.+)$/i);
+    const value = hotel ? hotel[1].trim() : line;
+    if (!value) continue;
+
+    itinerary.days.push({
+      ...emptyDay(itinerary.days.length + 1),
+      accommodation: value
+    });
+  }
+
+  return itinerary;
+}
+
 module.exports = {
   normalizeDate,
+  parseHotelItinerary,
   parseItinerary
 };

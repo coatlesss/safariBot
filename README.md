@@ -41,6 +41,18 @@ http://localhost:3131
 
 From there you can paste an itinerary, parse it, copy the JSON, open the login browser, and start the draft builder.
 
+The app starts in `Hotels only` mode. In this mode, you can paste a simple hotel list such as:
+
+```text
+Client: Jane Smith
+Trip: Kenya Hotels
+Hotel: Hemingways Nairobi
+Lodge: Tortilis Camp
+Serengeti Safari Camp
+```
+
+The login button opens a browser. Log in normally, then close that browser window; Safari Bot saves the session when the login window closes.
+
 ## Desktop App
 
 To launch Safari Bot as a desktop app:

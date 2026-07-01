@@ -1,7 +1,7 @@
 const fs = require("fs");
 const http = require("http");
 const path = require("path");
-const { parseItinerary } = require("./parseItinerary");
+const { parseHotelItinerary, parseItinerary } = require("./parseItinerary");
 const { loadConfig } = require("./config");
 const { login } = require("./session");
 const { buildPortalDraft } = require("./portalBuilder");
@@ -31,18 +31,18 @@ function createServer() {
 
     if (req.method === "POST" && url.pathname === "/api/parse") {
       const body = await readJson(req);
-      return sendJson(res, { itinerary: parseItinerary(bodyText(body)) });
+      return sendJson(res, { itinerary: parseByMode(bodyText(body), body.mode) });
     }
 
     if (req.method === "POST" && url.pathname === "/api/login") {
       const config = loadConfig("config/portal.json");
-      const storagePath = await login(config);
+      const storagePath = await login(config, { waitForClose: true });
       return sendJson(res, { ok: true, storagePath });
     }
 
     if (req.method === "POST" && url.pathname === "/api/build") {
       const body = await readJson(req);
-      const itinerary = body.itinerary || parseItinerary(bodyText(body));
+      const itinerary = body.itinerary || parseByMode(bodyText(body), body.mode);
       const config = loadConfig("config/portal.json");
       await buildPortalDraft(config, itinerary, { submit: Boolean(body.submit) });
       return sendJson(res, { ok: true });
@@ -85,6 +85,11 @@ function bodyText(body) {
   if (Array.isArray(body.text)) return body.text.join("\n");
   if (body.text == null) return "";
   return JSON.stringify(body.text, null, 2);
+}
+
+function parseByMode(text, mode) {
+  if (mode === "hotels") return parseHotelItinerary(text);
+  return parseItinerary(text);
 }
 
 function getStatus() {

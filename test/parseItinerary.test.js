@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { normalizeDate, parseItinerary } = require("../src/parseItinerary");
+const { normalizeDate, parseHotelItinerary, parseItinerary } = require("../src/parseItinerary");
 
 test("normalizes common date formats", () => {
   assert.equal(normalizeDate("2026-8-2"), "2026-08-02");
@@ -37,4 +37,22 @@ Activity: Afternoon game drive
   assert.equal(result.days[0].accommodation, "Hemingways Nairobi");
   assert.deepEqual(result.days[0].transfers, ["Private airport transfer"]);
   assert.deepEqual(result.days[1].flights, ["Wilson to Amboseli"]);
+});
+
+test("parses hotel-only lists without day headings", () => {
+  const result = parseHotelItinerary(`
+Client: John Example
+Trip: Tanzania Hotels
+Hotel: Arusha Coffee Lodge
+Lodge: Gibbs Farm
+Serengeti Safari Camp
+`);
+
+  assert.equal(result.clientName, "John Example");
+  assert.equal(result.tripTitle, "Tanzania Hotels");
+  assert.equal(result.days.length, 3);
+  assert.equal(result.days[0].accommodation, "Arusha Coffee Lodge");
+  assert.equal(result.days[1].accommodation, "Gibbs Farm");
+  assert.equal(result.days[2].accommodation, "Serengeti Safari Camp");
+  assert.deepEqual(result.days[0].activities, []);
 });

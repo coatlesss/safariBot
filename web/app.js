@@ -10,6 +10,7 @@ const loginButton = document.querySelector("#loginButton");
 const buildButton = document.querySelector("#buildButton");
 const configStatus = document.querySelector("#configStatus");
 const sessionStatus = document.querySelector("#sessionStatus");
+const hotelsOnlyToggle = document.querySelector("#hotelsOnlyToggle");
 
 let parsedItinerary = null;
 
@@ -44,7 +45,7 @@ async function loadSample() {
 async function parseCurrentText() {
   setBusy(true);
   try {
-    const data = await request("/api/parse", { text: input.value });
+    const data = await request("/api/parse", { text: input.value, mode: currentMode() });
     parsedItinerary = data.itinerary;
     renderItinerary(parsedItinerary);
     const dayCount = parsedItinerary.days.length;
@@ -58,10 +59,10 @@ async function parseCurrentText() {
 
 async function login() {
   setBusy(true);
-  setMessage("Opening Safari Portal login. Finish login in the browser, then return here.");
+    setMessage("Opening Safari Portal login. Close the login browser when you are done.");
   try {
     const data = await request("/api/login", {});
-    setMessage(`Saved login session: ${data.storagePath}`);
+    setMessage(`Login browser closed. Saved session: ${data.storagePath}`);
     await refreshStatus();
   } catch (error) {
     setMessage(error.message, true);
@@ -79,7 +80,7 @@ async function buildDraft() {
   setBusy(true);
   setMessage("Opening Safari Portal draft builder. Review the browser when it appears.");
   try {
-    await request("/api/build", { itinerary: parsedItinerary, submit: false });
+    await request("/api/build", { itinerary: parsedItinerary, mode: currentMode(), submit: false });
     setMessage("Draft builder finished.");
   } catch (error) {
     setMessage(error.message, true);
@@ -134,6 +135,16 @@ function renderItinerary(itinerary) {
 }
 
 function renderDay(day, index) {
+  const detailFields = hotelsOnlyToggle.checked
+    ? ""
+    : `
+        ${field("Meals", day.meals)}
+        ${field("Activities", day.activities, true)}
+        ${field("Transfers", day.transfers, true)}
+        ${field("Flights", day.flights, true)}
+        ${field("Notes", day.notes, true)}
+      `;
+
   return `
     <article class="day-card">
       <div class="day-title">
@@ -142,11 +153,7 @@ function renderDay(day, index) {
       </div>
       <div class="day-grid">
         ${field("Accommodation", day.accommodation)}
-        ${field("Meals", day.meals)}
-        ${field("Activities", day.activities, true)}
-        ${field("Transfers", day.transfers, true)}
-        ${field("Flights", day.flights, true)}
-        ${field("Notes", day.notes, true)}
+        ${detailFields}
       </div>
     </article>
   `;
@@ -194,6 +201,10 @@ function setBusy(isBusy) {
 function setMessage(text, isError = false) {
   message.textContent = text;
   message.style.color = isError ? "var(--bad)" : "var(--muted)";
+}
+
+function currentMode() {
+  return hotelsOnlyToggle.checked ? "hotels" : "full";
 }
 
 function escapeHtml(value) {

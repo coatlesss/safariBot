@@ -1,0 +1,281 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f7f5;
+  --panel: #ffffff;
+  --panel-strong: #edf3ee;
+  --text: #1f2a24;
+  --muted: #617067;
+  --line: #d8e1da;
+  --accent: #256f5b;
+  --accent-dark: #174b3f;
+  --warn: #8a5d18;
+  --ok: #246647;
+  --bad: #93423e;
+  --shadow: 0 12px 30px rgba(31, 42, 36, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #aab9af;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.app-shell {
+  width: min(1440px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 17px;
+}
+
+.topbar p,
+.message,
+.muted {
+  color: var(--muted);
+}
+
+.status-panel,
+.button-row,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 12px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.pill.ok {
+  border-color: #add0bd;
+  color: var(--ok);
+  background: #eff8f3;
+}
+
+.pill.warn {
+  border-color: #e1c78f;
+  color: var(--warn);
+  background: #fff8e9;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(420px, 1.1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.pane {
+  min-height: calc(100vh - 132px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+textarea {
+  width: 100%;
+  min-height: calc(100vh - 278px);
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+textarea:focus {
+  border-color: var(--accent);
+  outline: 3px solid rgba(37, 111, 91, 0.14);
+}
+
+.actions {
+  margin-top: 12px;
+}
+
+.message {
+  min-height: 22px;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.summary-item,
+.day-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+}
+
+.summary-item {
+  min-height: 76px;
+  padding: 10px;
+}
+
+.label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.value {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.days-list {
+  display: grid;
+  gap: 10px;
+  max-height: calc(100vh - 270px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.day-card {
+  padding: 12px;
+  background: #fff;
+}
+
+.day-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.field {
+  min-width: 0;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.empty-state {
+  border: 1px dashed #b9c7bf;
+  border-radius: 8px;
+  padding: 28px;
+  color: var(--muted);
+  text-align: center;
+  background: #fff;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    width: min(100vw - 20px, 720px);
+    padding: 12px 0;
+  }
+
+  .topbar,
+  .pane-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspace,
+  .summary-grid,
+  .day-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pane {
+    min-height: auto;
+  }
+
+  textarea {
+    min-height: 320px;
+  }
+
+  .days-list {
+    max-height: none;
+  }
+}

@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "Local Playwright helper for turning pasted safari itineraries into Safari Portal drafts.",
-  "main": "src/index.js",
+  "main": "desktop/main.js",
   "scripts": {
+    "app": "node src/server.js",
     "build": "node src/index.js build",
+    "desktop": "node desktop/launch.js",
     "login": "node src/index.js login",
     "parse": "node src/index.js parse",
     "test": "node --test"
@@ -13,5 +15,7 @@
   "dependencies": {
     "playwright": "^1.45.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "electron": "^43.0.0"
+  }
 }

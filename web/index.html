@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Safari Bot</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>Safari Bot</h1>
+          <p>Paste an itinerary, check the parse, then build a Safari Portal draft.</p>
+        </div>
+        <div class="status-panel" aria-live="polite">
+          <span id="configStatus" class="pill">Config</span>
+          <span id="sessionStatus" class="pill">Session</span>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <div class="pane input-pane">
+          <div class="pane-header">
+            <h2>Itinerary Text</h2>
+            <div class="button-row">
+              <button id="sampleButton" type="button">Load Sample</button>
+              <button id="clearButton" type="button">Clear</button>
+            </div>
+          </div>
+          <textarea id="itineraryInput" spellcheck="true" placeholder="Paste the itinerary here..."></textarea>
+          <div class="actions">
+            <button id="parseButton" class="primary" type="button">Parse Itinerary</button>
+            <button id="loginButton" type="button">Open Login</button>
+            <button id="buildButton" type="button">Build Draft</button>
+          </div>
+          <p id="message" class="message" role="status"></p>
+        </div>
+
+        <div class="pane output-pane">
+          <div class="pane-header">
+            <h2>Parsed Result</h2>
+            <button id="copyJsonButton" type="button">Copy JSON</button>
+          </div>
+
+          <div id="summary" class="summary-grid"></div>
+          <div id="days" class="days-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

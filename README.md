@@ -25,6 +25,32 @@ Copy-Item config\portal.example.json config\portal.json
 
 Edit `config/portal.json` with the real Safari Portal URLs and labels/selectors you see in your account.
 
+## Local App
+
+For easier testing in a browser, start the local UI:
+
+```powershell
+npm run app
+```
+
+Open:
+
+```text
+http://localhost:3131
+```
+
+From there you can paste an itinerary, parse it, copy the JSON, open the login browser, and start the draft builder.
+
+## Desktop App
+
+To launch Safari Bot as a desktop app:
+
+```powershell
+npm run desktop
+```
+
+This opens the same UI in its own application window and starts the local backend automatically.
+
 ## One-time login
 
 ```powershell

@@ -1,4 +1,5 @@
 const fs = require("fs");
+const readline = require("readline/promises");
 const { parseItinerary } = require("./parseItinerary");
 const { loadConfig } = require("./config");
 
@@ -22,11 +23,27 @@ function parseArgs(argv) {
   return args;
 }
 
-function readItinerary(args) {
+async function readItinerary(args, options = {}) {
   if (args.stdin) return fs.readFileSync(0, "utf8");
   const file = args._[0];
-  if (!file) throw new Error("Missing itinerary file. Pass a path or use --stdin.");
+  if (!file && options.allowPaste) return readPastedItinerary();
+  if (!file) throw new Error("Missing itinerary file. Pass a path, use --stdin, or run npm run parse and paste text.");
   return fs.readFileSync(file, "utf8");
+}
+
+async function readPastedItinerary() {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const lines = [];
+
+  console.log("Paste the itinerary below. Type END on its own line when finished.");
+  while (true) {
+    const line = await rl.question("");
+    if (line.trim().toUpperCase() === "END") break;
+    lines.push(line);
+  }
+
+  rl.close();
+  return lines.join("\n");
 }
 
 async function main() {
@@ -47,13 +64,13 @@ async function main() {
   }
 
   if (command === "parse") {
-    const itinerary = parseItinerary(readItinerary(args));
+    const itinerary = parseItinerary(await readItinerary(args, { allowPaste: true }));
     console.log(JSON.stringify(itinerary, null, 2));
     return;
   }
 
   if (command === "build") {
-    const itinerary = parseItinerary(readItinerary(args));
+    const itinerary = parseItinerary(await readItinerary(args));
     if (args["dry-run"]) {
       console.log(JSON.stringify(itinerary, null, 2));
       return;
@@ -73,6 +90,7 @@ function printHelp() {
 
 Usage:
   npm run login -- --config config/portal.json
+  npm run parse
   npm run parse -- itinerary.txt
   npm run build -- itinerary.txt --config config/portal.json [--dry-run] [--submit]
 

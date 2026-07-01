@@ -1,0 +1,23 @@
+Client: Jane Smith
+Trip: Kenya Family Safari
+Start: 2026-08-12
+End: 2026-08-19
+
+Day 1 - Aug 12 - Nairobi
+Accommodation: Hemingways Nairobi
+Transfer: Airport meet and greet, private transfer to hotel
+Activity: Evening at leisure
+Meals: Dinner
+Notes: VIP welcome amenities
+
+Day 2 - Aug 13 - Amboseli
+Flight: Wilson Airport to Amboseli Airstrip
+Accommodation: Tortilis Camp
+Activity: Afternoon game drive
+Meals: Breakfast, lunch, dinner
+
+Day 3 - Aug 14 - Amboseli
+Activity: Morning game drive
+Activity: Maasai village visit
+Accommodation: Tortilis Camp
+Meals: Breakfast, lunch, dinner

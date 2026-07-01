@@ -1,0 +1,28 @@
+{
+  "loginUrl": "https://account.safariportal.app/auth/login",
+  "newItineraryUrl": "https://account.safariportal.app/acc/1594060708398499298/itineraries/itinerary/0/general-info?",
+  "storageStatePath": ".auth/safari-portal.json",
+  "headless": false,
+  "fields": {
+    "tripTitle": { "label": "Trip Name" },
+    "clientName": { "label": "Client Name" },
+    "startDate": { "label": "Start Date" },
+    "endDate": { "label": "End Date" },
+    "summaryNotes": { "label": "Notes" }
+  },
+  "days": {
+    "addDayButton": { "role": "button", "name": "Add Day" },
+    "containerSelector": "[data-day-index='{index}']",
+    "fields": {
+      "date": { "label": "Date" },
+      "location": { "label": "Location" },
+      "accommodation": { "label": "Accommodation" },
+      "activities": { "label": "Activities" },
+      "transfers": { "label": "Transfers" },
+      "flights": { "label": "Flights" },
+      "meals": { "label": "Meals" },
+      "notes": { "label": "Notes" }
+    }
+  },
+  "submitButton": null
+}

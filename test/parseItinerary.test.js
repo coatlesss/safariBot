@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { normalizeDate, parseHotelItinerary, parseItinerary } = require("../src/parseItinerary");
+const { buildHotelTimelinePlan } = require("../src/portalBuilder");
 
 test("normalizes common date formats", () => {
   assert.equal(normalizeDate("2026-8-2"), "2026-08-02");
@@ -98,4 +99,27 @@ Day 1-2	Heda-Ito	Own arrangement
   assert.equal(result.days[1].date, "2026-04-11");
   assert.equal(result.days[2].date, "2026-04-12");
   assert.equal(result.days[2].accommodation, "Hotel TBD - Kyoto");
+});
+
+test("plans repeated Japan hotel and transfer rows for longer routes", () => {
+  const result = parseHotelItinerary(`
+Day 1	Osaka	Arrival and free evening
+2	Kyoto	Shinkansen Osaka-Kyoto
+3-4	Hakone	Ryokan stay and open-air baths
+5	Tokyo	Train to Tokyo
+6	Hiroshima	Shinkansen to Hiroshima
+7	Flight back
+`, { startDate: "2026-08-12" });
+
+  const plan = buildHotelTimelinePlan(result.days);
+
+  assert.equal(result.days.length, 6);
+  assert.deepEqual(plan.map((item) => item.hotelRowIndex), [0, 2, 4, 6, 8]);
+  assert.deepEqual(plan.map((item) => item.transferRowIndex), [1, 3, 5, 7, null]);
+  assert.deepEqual(plan.map((item) => item.stay.firstDay.location), ["Osaka", "Kyoto", "Hakone", "Tokyo", "Hiroshima"]);
+  assert.equal(plan[0].transferTag, "@TransferOsakatoKyotoOsakaKyotoNormal");
+  assert.equal(plan[1].transferTag, "@TransferKyototoHakoneKyotoHakoneNormal");
+  assert.equal(plan[2].transferTag, "@TransferHakonetoTokyoHakoneTokyoNormal");
+  assert.equal(plan[3].transferTag, "@TransferTokyotoHiroshimaTokyoHiroshimaNormal");
+  assert.equal(plan[4].transferTag, "");
 });

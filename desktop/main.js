@@ -1,8 +1,9 @@
 const { app, BrowserWindow, shell } = require("electron");
-const { startServer } = require("../src/server");
+const { closeOpenDraftBrowsers, startServer } = require("../src/server");
 
 let serverHandle = null;
 let mainWindow = null;
+let isQuitting = false;
 
 async function createWindow() {
   serverHandle = await startServer({ port: 0, host: "127.0.0.1" });
@@ -43,7 +44,15 @@ app.on("window-all-closed", () => {
   }
 });
 
-app.on("before-quit", () => {
+app.on("before-quit", async (event) => {
+  if (!isQuitting) {
+    event.preventDefault();
+    isQuitting = true;
+    await closeOpenDraftBrowsers();
+    app.quit();
+    return;
+  }
+
   if (serverHandle?.server) {
     serverHandle.server.close();
   }

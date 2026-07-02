@@ -1,0 +1,477 @@
+Safari portal pages to build,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+Transfer pages,,,,,,,,,,,,https://account.safariportal.app/acc/1594060708398499298/content-library/page/10891121/landing,,,
+,,,,,,,,,,,,,,,
+Pages needed:,From Area,To Area,Segment,Mode of transport,Name (RI_AreaStart_AreaEnd_Segment),General intro text,In Safari Portal,Link,Added when,Checked by Gerco (when),Note,From Station,To Station,UPDATE,
+1,Tokyo,Hakone,Normal,"1. Shinkansen
+2. Rent a car from Odawara station",Transfer Tokyo to Hakone,"The journey from Tokyo to Hakone is quick and comfortable, combining Japan’s high-speed rail with a short onward transfer into the mountains.",YES,https://travel.safariportal.app/TransferTransferTokyoHakonenormal?id=11223857&type=agent,05/18,10Jun26,"Add 4x Shinkansen, starting from the 4 stations, so we can delete the 3 that are not applicable","Tokyo Station
+Shinagawa Station
+Shinjuku Station
+Ueno Station",Odawara Station,"1 to 1.5 hour, but the next page says 1.5 to 2 hours. maybe change both to 1.5 to 2 h",OK
+2,Tokyo,Hakone,High,"1. Private transfer to station
+2. Shinkansen (Green Class)
+3. Rent a car from Odawara station / private transfer",Transfer Tokyo to Hakone,"Traveling from Tokyo to Hakone combines private transfers with Japan’s renowned high-speed rail network, ensuring a relaxed and seamless journey into the mountains.",YES,https://travel.safariportal.app/TransferTransferTokyoHakoneHigh?id=11224299&type=agent,05/18,10Jun26,"Same as above, but add a private transfer from <Hotel> to Tokyo/Shinagawa/Shinjuku/Ueno station.
+
+So this page would have 1 private transfer text block with the 4 station titles, and then 4x shinkansen text blocks","Tokyo Station
+Shinagawa Station
+Shinjuku Station
+Ueno Station",Odawara Station,"Add rental car option to Hakone segment
+
+first sentence 3rd paragraph is double: 
+Upon arrival, a private vehicle will take you directly to your accommodation in Hakone. ",
+3,Hakone,Tokyo,Normal,"1. Return rental car to Odawara station
+2. Shinkansen",Transfer Hakone to Tokyo,"Leaving the mountain landscapes of Hakone behind, the journey back to Tokyo is quick and comfortable thanks to Japan’s efficient high-speed rail network.",YES,https://travel.safariportal.app/Transfer-HTTransferTokyoHakonenormal?id=11224600&type=agent,05/18,10Jun26,"Add 4x Shinkansen, going to the 4 stations, so we can delete the 3 that are not applicable",Odawara Station,"Tokyo Station
+Shinagawa Station
+Shinjuku Station
+Ueno Station","Title says Shinakansen, not Shinkansen",
+4,Hakone,Tokyo,High,"1. Return rental car / private transfer to Odawara station
+2. Shinkansen (Green Class)
+3. Private transfer to Hotel",Transfer Hakone to Tokyo,"Leaving the mountain landscapes of Hakone behind, the journey back to Tokyo is quick and comfortable thanks to Japan’s efficient high-speed rail network.",YES,https://travel.safariportal.app/Transfer-HTTransferTokyoHakonehigh?id=11224656&type=agent,05/18,10Jun26,"Same as above, but add a private transfer from Tokyo/Shinagawa/Shinjuku/Ueno station to <Hotel>.
+
+So this page would have 1 private transfer text block with the 4 station titles, and then 4x shinkansen text blocks",Odawara Station,"Tokyo Station
+Shinagawa Station
+Shinjuku Station
+Ueno Station",,
+5,Tokyo,Kyoto,Normal,1. Shinkansen,Transfer Tokyo to Kyoto,,YES,https://travel.safariportal.app/Transfer-TKTransferTokyoKyotoNormal?id=11225380&type=agent,05/18,10Jun26,"Add 2x shinkansen, from Tokyo and from Shinagawa station","Tokyo Station
+Shinagawa Station",Kyoto Station,,
+6,Tokyo,Kyoto,High,"1. Private transfer to station
+2. Shinkansen (Green Class)
+3. Private transfer to Hotel",Transfer Tokyo to Kyoto,,YES,https://travel.safariportal.app/Transfer-TKTransferTokyoKyotoHigh?id=11225591&type=agent,05/18,10Jun26,"Add 2x shinkansen, from Tokyo and from Shinagawa station","Tokyo Station
+Shinagawa Station",Kyoto Station,,
+7,Kyoto,Tokyo,Normal,1. Shinkansen,Transfer Kyoto to Tokyo,,YES,https://travel.safariportal.app/Transfer-KTTransferTokyoKyotoNormal?id=11225758&type=agent,05/18,10Jun26,"Add 2x shinkansen, to Tokyo and to Shinagawa station",Kyoto Station,"Tokyo Station
+Shinagawa Station",,
+8,Kyoto,Tokyo,High,"1. Private transfer to station
+2. Shinkansen (Green Class)
+3. Private transfer to Hotel",Transfer Kyoto to Tokyo,,YES,https://travel.safariportal.app/Transfer-KTTransferTokyoKyotoHigh?id=11225848&type=agent,05/18,10Jun26,"Add 2x shinkansen, to Tokyo and to Shinagawa station",Kyoto Station,"Tokyo Station
+Shinagawa Station",,
+9,Hakone,Kyoto,Normal,"1. Return rental car to Odawara station
+2. Shinkansen",Transfer Hakone to Kyoto,,YES,https://travel.safariportal.app/Transfer-HKTransferHakoneKyotoNormal?id=11245146&type=agent,05/18,10Jun26,,Odawara Station,Kyoto Station,,
+10,Hakone,Kyoto,High,"1. Return rental car / private transfer to Odawara station
+2. Shinkansen (Green Class)
+3. Private transfer to Hotel",Transfer Hakone to Kyoto,,YES,https://travel.safariportal.app/Transfer-HKTransferHakoneKyotoHigh?id=11245160&type=agent,05/18,10Jun26,,Odawara Station,Kyoto Station,Add rental car option,
+11,Kyoto,Hakone,Normal,"1. Shinkansen
+2. Rent a car from Odawara station",Transfer Kyoto to Hakone,,YES,https://travel.safariportal.app/Transfer-KHTransferHakoneKyotoNormal?id=11245170&type=agent,05/18,10Jun26,,Kyoto Station,Odawara Station,,
+12,Kyoto,Hakone,High,"1. Private transfer to station
+2. Shinkansen (Green Class)
+3. Rent a car from Odawara station / private transfer",Transfer Kyoto to Hakone,,YES,https://travel.safariportal.app/Transfer-KHTransferHakoneKyotoHigh?id=11245171&type=agent,05/18,10Jun26,,Kyoto Station,Odawara Station,Add rental car option,
+13,Kyoto,Osaka,Normal,1. Shinkansen,Transfer Kyoto to Osaka,,YES,https://travel.safariportal.app/Transfer-KOTransferKyotoOsakaNormal?id=11245364&type=agent,05/18,,,Kyoto Station,(Shin-)Osaka Station,,
+14,Kyoto,Osaka,High,"1. Private transfer to station
+2. Shinkansen (Green Class)
+3. Private transfer to Hotel",Transfer Kyoto to Osaka,,YES,https://travel.safariportal.app/Transfer-KOTransferKyotoOsakaHigh?id=11245371&type=agent,05/18,,,Kyoto Station,(Shin-)Osaka Station,,
+15,Osaka,Kyoto,Normal,1. Shinkansen,Transfer Osaka to Kyoto,,YES,https://travel.safariportal.app/Transfer-OKTransferKyotoOsakaNormal?id=11245374&type=agent,05/18,,,(Shin-)Osaka Station,Kyoto Station,,
+16,Osaka,Kyoto,High,"1. Private transfer to station
+2. Shinkansen (Green Class)
+3. Private transfer to Hotel",Transfer Osaka to Kyoto,,YES,https://travel.safariportal.app/Transfer-OKTransferKyotoOsakaHigh?id=11245386&type=agent,05/18,,,(Shin-)Osaka Station,Kyoto Station,,
+17,Kyoto,Hiroshima,Normal,1. Shinkansen,Transfer Kyoto to Hiroshima,,YES,https://travel.safariportal.app/Transfer-KHRTransferKyotoHiroshimaNormal?id=11246995&type=agent,05/18,,,Kyoto Station,Hiroshima Station,,
+18,Kyoto,Hiroshima,High,"1. Private transfer to station
+2. Shinkansen (Green Class)",Transfer Kyoto to Hiroshima,,YES,https://travel.safariportal.app/Transfer-KHRTransferKyotoHiroshimaHigh?id=11247507&type=agent,05/18,,,Kyoto Station,Hiroshima Station,,
+19,Osaka,Hiroshima,Normal,1. Shinkansen,Transfer Osaka to Hiroshima,,YES,https://travel.safariportal.app/Transfer-OHRTransferHiroshimaOsakaNormal?id=11247553&type=agent ,05/18,,,Shin-Osaka Station,Hiroshima Station,,
+20,Osaka,Hiroshima,High,"1. Private transfer to station
+2. Shinkansen (Green Class)",Transfer Osaka to Hiroshima,,YES,https://travel.safariportal.app/Transfer-OHRTransferHiroshimaOsakaHigh?id=11247570&type=agent,05/18,,,Shin-Osaka Station,Hiroshima Station,,
+21,Kyoto,Koyasan,Normal,"1. Various trains to Gokurakubashi Station
+2. Cable car train to Koyasan
+
+Total duration: Between 2 hours and 20 minutes and 3 hours and 40 minutes, depending on start time.
+
+3. Rental car: For this route we often suggest to rent a car that takes 2 hours and 20 minutes, which gives you the flexibility to leave when you want and to stop halfway for lunch",Transfer Kyoto to Koyasan,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-KoyasanKyotoKoyasanNormal?id=11247643&type=agent,05/18,,,Kyoto Station,Koyasan Station,,
+22,Koyasan,Kyoto,Normal,"1. Cable car train to Gokurakubashi Station 
+2. Various trains to Kyoto Station
+
+Total duration: Between 2 hours and 20 minutes and 3 hours and 40 minutes, depending on start time.
+
+3. Rental car: For this route we often suggest to rent a car that takes 2 hours and 20 minutes, which gives you the flexibility to leave when you want and to stop halfway for lunch",Transfer Koyasan to Kyoto,,YES,https://travel.safariportal.app/Transfer-Koyasan-to-KyotoKoyasanKyotoNormal?id=11247644&type=agent,05/18,,,Koyasan Station,Kyoto Station,,
+23,Osaka,Koyasan,Normal,"1. Various trains to Gokurakubashi Station
+2. Cable car train to Koyasan
+
+Total duration: Between 1 hours and 45 minutes and 2 hours and 40 minutes, depending on start time.
+
+3. Rental car: For this route we often suggest to rent a car that takes 1 hours and 50 minutes, which gives you the flexibility to leave when you want and to stop halfway for lunch",Transfer Osaka to Koyasan,,YES,https://travel.safariportal.app/Transfer-Osaka-to-KoyasanOsakaKoyasanNormal?id=11247800&type=agent,05/18,,,Osaka Station,Koyasan Station,,
+24,Koyasan,Osaka,Normal,"1. Cable car train to Gokurakubashi Station 
+2. Various trains to Osaka Station
+
+Total duration: Between 1 hours and 45 minutes and 2 hours and 40 minutes, depending on start time.
+
+3. Rental car: For this route we often suggest to rent a car that takes 1 hours and 50 minutes, which gives you the flexibility to leave when you want and to stop halfway for lunch",Transfer Koyasan to Osaka,,YES,https://travel.safariportal.app/Transfer-Koyasan-to-OsakaKoyasanOsakaNormal?id=11247912&type=agent,05/18,,,Koyasan Station,Osaka station,,
+25,Kyoto,Naoshima,Normal,"1. Shinkansen Kyoto → Okayama
+2. Local train Okayama → Uno
+3. Ferry Uno → Naoshima (Miyanoura Port)",Transfer Kyoto to Naoshima,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-NaoshimaKyotoNaoshimaNormal?id=11710927&type=agent,05/18,,,Kyoto Station,Naoshima (Miyanoura Port),,
+26,Kyoto,Naoshima,High,"1. Private transfer to Kyoto Station
+2. Shinkansen (Green Class) Kyoto → Okayama
+3. Taxi Okayama → Uno
+4. Ferry Uno → Naoshima",Transfer Kyoto to Naoshima ,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-NaoshimaKyotoNaoshimaHigh?id=12094823&type=agent,05/18,,,Kyoto Station,Naoshima (Miyanoura Port),,
+27,Naoshima,Kyoto,Normal,"1. Ferry Naoshima → Uno
+2. Local train Uno → Okayama
+3. Shinkansen Okayama → Kyoto",Transfer Naoshima to Kyoto,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-KyotoNaoshimaKyotoNormal?id=12094946&type=agent,05/18,,,Naoshima (Miyanoura Port),Kyoto Station,,
+28,Naoshima,Kyoto,High,"1. Ferry Naoshima → Uno
+2. Taxi Uno → Okayama
+3. Shinkansen (Green Class) Okayama → Kyoto
+4. Private transfer to Hotel",Transfer Naoshima to Kyoto,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-KyotoNaoshimaKyotoHigh?id=12094969&type=agent,05/18,,,Naoshima (Miyanoura Port),Kyoto Station,,
+29,Osaka,Naoshima,Normal,"1. Shinkansen Shin-Osaka → Okayama
+2. Local train Okayama → Uno
+3. Ferry Uno → Naoshima",Transfer Osaka to Naoshima,,YES,https://travel.safariportal.app/Transfer-Osaka-to-NaoshimaOsakaNaoshimaNormal?id=12111759&type=agent,05/18,,,Shin-Osaka Station,Naoshima (Miyanoura Port),,
+30,Osaka,Naoshima,High,"1. Private transfer to Shin-Osaka Station
+2. Shinkansen (Green Class) Shin-Osaka → Okayama
+3. Taxi Okayama → Uno
+4. Ferry Uno → Naoshima",Transfer Osaka to Naoshima,,YES,https://travel.safariportal.app/Transfer-Osaka-to-NaoshimaOsakaNaoshimaHigh?id=12111806&type=agent,05/18,,,Shin-Osaka Station,Naoshima (Miyanoura Port),,
+31,Naoshima,Osaka,Normal,"1. Ferry Naoshima → Uno
+2. Local train Uno → Okayama
+3. Shinkansen Okayama → Shin-Osaka",Transfer Naoshima to Osaka,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-OsakaNaoshimaOsakaNormal?id=12111839&type=agent,05/18,,,Naoshima (Miyanoura Port),Shin-Osaka Station,,
+32,Naoshima,Osaka,High,"1. Ferry Naoshima → Uno
+2. Taxi Uno → Okayama
+3. Shinkansen (Green Class) Okayama → Shin-Osaka
+4. Private transfer to Hotel",Transfer Naoshima to Osaka,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-OsakaNaoshimaOsakaHigh?id=12111864&type=agent,05/18,,,Naoshima (Miyanoura Port),Shin-Osaka Station,,
+33,Tokyo,Kawaguchiko,Normal,1. Limited Express Fuji Excursion Shinjuku → Kawaguchiko,Transfer Tokyo to Kawaguchiko,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-KawaguchikoTokyoKawaguchikoNormal?id=12111913&type=agent,05/18,,,Shinjuku Station,Kawaguchiko Station,,
+34,Tokyo,Kawaguchiko,High,"1. Private transfer to Shinjuku Station
+2. Limited Express Fuji Excursion (Reserved seats)
+3. Taxi Kawaguchiko Station → Hotel",Transfer Tokyo to Kawaguchiko,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-KawaguchikoTokyoKawaguchikoHigh?id=12111972&type=agent,05/18,,,Shinjuku Station,Kawaguchiko Station,,
+35,Kawaguchiko,Tokyo,Normal,1. Limited Express Fuji Excursion Kawaguchiko → Shinjuku,Transfer Kawaguchiko to Tokyo,,YES,https://travel.safariportal.app/Transfer-Kawaguchiko-to-TokyoKawaguchikoTokyoNormal?id=12111999&type=agent,05/18,,,Kawaguchiko Station,Shinjuku Station,,
+36,Kawaguchiko,Tokyo,High,"1. Taxi Hotel → Kawaguchiko Station
+2. Limited Express Fuji Excursion (Reserved seats)
+3. Private transfer Shinjuku Station → Hotel",Transfer Kawaguchiko to Tokyo,,YES,https://travel.safariportal.app/Transfer-Kawaguchiko-to-TokyoKawaguchikoTokyoHigh?id=12112014&type=agent,05/18,,,Kawaguchiko Station,Shinjuku Station,,
+37,Kanazawa,Takayama,Normal,1. Nohi Bus Kanazawa → Takayama,Transfer Kanzawa to Takayama,,YES,https://travel.safariportal.app/Transfer-Kanazawa-to-TakayamaKanazawaTakayamaNormal?id=12112207&type=agent,05/18,,,Kanazawa Station,Takayama Station,,
+38,Kanazawa,Takayama,High,1. Private transfer Kanazawa → Takayama,Transfer Kanzawa to Takayama,,YES,https://travel.safariportal.app/Transfer-Kanazawa-to-TakayamaKanazawaTakayamaHigh?id=12112233&type=agent,05/18,,,Kanazawa Station,Takayama Station,,
+39,Takayama,Kanazawa,Normal,1. Nohi Bus Takayama → Kanazawa,Transfer Takayama to Kanazawa,,YES,https://travel.safariportal.app/Transfer-Takayama-to-KanazawaTakayamaKanazawaNormal?id=12112268&type=agent,05/18,,,Takayama Station,Kanazawa Station,,
+40,Takayama,Kanazawa,High,1. Private transfer Takayama → Kanazawa,Transfer Takayama to Kanazawa,,YES,https://travel.safariportal.app/Transfer-Takayama-to-KanazawaTakayamaKanazawaHigh?id=12112287&type=agent,05/18,,,Takayama Station,Kanazawa Station,,
+41,Takayama,Kyoto,Normal,"1. JR Limited Express Hida Takayama → Nagoya
+2. Shinkansen Nagoya → Kyoto",Transfer Takayama to Kyoto,,YES,https://travel.safariportal.app/Transfer-Takayama-to-KyotoTakayamaKyotoNormal?id=12112326&type=agent,05/18,,,Takayama Station,Kyoto Station,,
+42,Takayama,Kyoto,High,"1. Taxi Hotel → Takayama Station
+2. JR Limited Express Hida (Green Class) Takayama → Nagoya
+3. Shinkansen (Green Class) Nagoya → Kyoto
+4. Private transfer station → Hotel",Transfer Takayama to Kyoto,,YES,https://travel.safariportal.app/Transfer-Takayama-to-KyotoTakayamaKyotoHigh?id=12112380&type=agent,05/18,,,Takayama Station,Kyoto Station,,
+43,Kyoto,Takayama,Normal,"1. Shinkansen Kyoto → Nagoya
+2. JR Limited Express Hida Nagoya → Takayama",Transfer Kyoto to Takayama,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-TakayamaKyotoTakayamaNormal?id=12112522&type=agent,05/18,,,Kyoto Station,Takayama Station,,
+44,Kyoto,Takayama,High,"1. Private transfer to Kyoto Station
+2. Shinkansen (Green Class) Kyoto → Nagoya
+3. JR Limited Express Hida (Green Class) Nagoya → Takayama
+4. Taxi station → Hotel",Transfer Kyoto to Takayama,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-TakayamaKyotoTakayamaHigh?id=12112569&type=agent,05/18,,,Kyoto Station,Takayama Station,,
+45,Kyoto,Hiroshima,Normal,1. Shinkansen Kyoto → Hiroshima,Transfer Kyoto to Hiroshima,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-HiroshimaKyotoHiroshimaNormal?id=12134754&type=agent,05/18,,,Kyoto Station,Hiroshima Station,,
+46,Kyoto,Hiroshima,High,"1. Private transfer to Kyoto Station
+2. Shinkansen (Green Class) Kyoto → Hiroshima
+3. Private transfer station → Hotel",Transfer Kyot to Hiroshima,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-HiroshimaKyotoHiroshimaHigh?id=12134768&type=agent,05/18,,,Kyoto Station,Hiroshima Station,,
+47,Hiroshima,Kyoto,Normal,1. Shinkansen Hiroshima → Kyoto,Transfer Hiroshima to Kyoto,,YES,https://travel.safariportal.app/Transfer-Hiroshima-to-KyotoHiroshimaKyotoNormal?id=12134772&type=agent,05/18,,,Hiroshima Station,Kyoto Station,,
+48,Hiroshima,Kyoto,High,"1. Private transfer Hotel → Hiroshima Station
+2. Shinkansen (Green Class) Hiroshima → Kyoto
+3. Private transfer station → Hotel",Transfer Hiroshima to Kyoto,,YES,https://travel.safariportal.app/Transfer-Hiroshima-to-KyotoHiroshimaKyotoHigh?id=12134773&type=agent,05/18,,,Hiroshima Station,Kyoto Station,,
+51,Hiroshima,Osaka,Normal,1. Shinkansen Hiroshima → Shin-Osaka,Transfer Hiroshima to Osaka,,YES,https://travel.safariportal.app/Transfer-Hiroshima-to-OsakaHiroshimaOsakaNormal?id=12136614&type=agent,05/18,,,Hiroshima Station,Shin-Osaka Station,,
+52,Hiroshima,Osaka,High,"1. Private transfer Hotel → Hiroshima Station
+2. Shinkansen (Green Class) Hiroshima → Shin-Osaka
+3. Private transfer station → Hotel",Transfer Hiroshima to Osaka,,YES,https://travel.safariportal.app/Transfer-Hiroshima-to-OsakaHiroshimaOsakaHigh?id=12136619&type=agent,05/18,,,Hiroshima Station,Shin-Osaka Station,,
+53,Hiroshima,Miyajima,Normal,"1. JR train Hiroshima → Miyajimaguchi
+2. Ferry Miyajimaguchi → Miyajima",Transfer Hiroshima to Miyajima,,YES,https://travel.safariportal.app/Transfer-Hiroshima-to-MiyajimaHiroshimaMiyajimaNormal?id=12142001&type=agent,05/18,,,Hiroshima Station,Miyajimaguchi Station,,
+54,Hiroshima,Miyajima,High,"1. Taxi Hotel → Hiroshima Station
+2. JR train Hiroshima → Miyajimaguchi
+3. Ferry → Miyajima
+4. Ryokan pickup",Transfer Hiroshima to Miyajima,,YES,https://travel.safariportal.app/Transfer-Hiroshima-to-MiyajimaHiroshimaMiyajimaHigh?id=12142164&type=agent,05/18,,,Hiroshima Station,Miyajima Port,,
+55,Miyajima,Hiroshima,Normal,"1. Ferry Miyajima → Miyajimaguchi
+2. JR train Miyajimaguchi → Hiroshima",Transfer Miyajima to Hiroshima,,YES,https://travel.safariportal.app/Transfer-Miyajima-to-HiroshimaMiyajimaHiroshimaNormal?id=12142355&type=agent,05/18,,,Miyajima Port,Hiroshima Station,,
+56,Miyajima,Hiroshima,High,"1. Ferry Miyajima → Miyajimaguchi
+2. JR train → Hiroshima
+3. Private transfer station → Hotel",Transfer Miyajima to Hiroshima,,YES,https://travel.safariportal.app/Transfer-Miyajima-to-HiroshimaMiyajimaHiroshimaHigh?id=12142495&type=agent,05/18,,,Miyajima Port,Hiroshima Station,,
+57,Hiroshima,Setoda,Normal,"1. Shinkansen Hiroshima → Fukuyama
+2. Local train Fukuyama → Onomichi
+3. Taxi Onomichi → Setoda",Transfer Hiroshima to Setoda,,YES,https://travel.safariportal.app/Transfer-Hiroshima-to-SetodaHiroshimaSetodaNormal?id=12142858&type=agent,05/18,,,Hiroshima Station,Onomichi Station,Hiroshima → Mihara (Shinkansen) → Mihara Port → Ferry → Setoda,
+58,Hiroshima,Setoda,High,1. Private transfer Hiroshima → Setoda,Transfer Hiroshima to Setoda,,YES,https://travel.safariportal.app/Transfer-Hiroshima-to-SetodaHiroshimaSetodaHigh?id=12142983&type=agent,05/18,,,Hiroshima Station,Setoda,Private transfer Hiroshima → Setoda,
+59,Setoda,Hiroshima,Normal,"1. Taxi Setoda → Onomichi
+2. Local train Onomichi → Fukuyama
+3. Shinkansen Fukuyama → Hiroshima",Transfer Setoda to Hiroshima,,YES,https://travel.safariportal.app/Transfer-Setoda-to-HiroshimaSetodaHiroshimaNormal?id=12143132&type=agent,05/18,,,Setoda,Hiroshima Station,Setoda → Ferry → Mihara Port → Mihara Station → Hiroshima,
+60,Setoda,Hiroshima,High,1. Private transfer Setoda → Hiroshima,Transfer Setoda to Hiroshima,,YES,https://travel.safariportal.app/Transfer-Setoda-to-HiroshimaSetodaHiroshimaHigh?id=12143202&type=agent,05/18,,,Setoda,Hiroshima Station,Private transfer Setoda → Hiroshima,
+61,Kyoto,Setoda,Normal,"1. Shinkansen Kyoto → Fukuyama
+2. Local train Fukuyama → Onomichi
+3. Taxi Onomichi → Setoda",Transfer Kyoto to Setoda,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-SetodaKyotoSetodaNormal?id=12143229&type=agent,05/18,,,Kyoto Station,Onomichi Station,Kyoto → Mihara (Shinkansen) → Mihara Port → Ferry → Setoda,
+62,Kyoto,Setoda,High,1. Private transfer Kyoto → Setoda,Transfer Kyoto to Setoda,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-SetodaKyotoSetodaHigh?id=12143304&type=agent,05/18,,,Kyoto Station,Setoda,Private transfer Kyoto → Setoda,
+63,Setoda,Kyoto,Normal,"1. Taxi Setoda → Onomichi
+2. Local train Onomichi → Fukuyama
+3. Shinkansen Fukuyama → Kyoto",Transfer Setoda to Kyoto,,YES,https://travel.safariportal.app/Transfer-Setoda-to-KyotoSetodaKyotoNormal?id=12143314&type=agent,05/18,,,Setoda,Kyoto Station,Setoda → Ferry → Mihara Port → Mihara Station → Kyoto,
+64,Setoda,Kyoto,High,1. Private transfer Setoda → Kyoto,Transfer Setoda to Kyoto,,YES,https://travel.safariportal.app/Transfer-Setoda-to-KyotoSetodaKyotoHigh?id=12143943&type=agent,05/18,,,Setoda,Kyoto Station,Private transfer Setoda → Kyoto,
+65,Tokyo,Okinawa,Normal,1. Flight Tokyo → Okinawa,Transfer Tokyo to Okinawa,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-OkinawaTokyoOkinawaNormal?id=12144097&type=agent,05/18,,,Haneda Airport,Naha Airport,,
+66,Tokyo,Okinawa,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class) Tokyo → Okinawa
+3. Private transfer Airport → Hotel",Transfer Tokyo to Okinawa,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-OkinawaTokyoOkinawaHigh?id=12144217&type=agent,05/18,,,Haneda Airport,Naha Airport,,
+67,Okinawa,Tokyo,Normal,1. Flight Okinawa → Tokyo,Transfer Okinawa to Tokyo,,YES,https://travel.safariportal.app/Transfer-Okinawa-to-TokyoOkinawaTokyoNormal?id=12144461&type=agent,05/18,,,Naha Airport,Haneda Airport,,
+68,Okinawa,Tokyo,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",Transfer Okinawa to Tokyo,,YES,https://travel.safariportal.app/Transfer-Okinawa-to-TokyoOkinawaTokyoHigh?id=12144476&type=agent,05/18,,,Naha Airport,Haneda Airport,,
+69,Osaka,Okinawa,Normal,1. Flight Osaka → Okinawa,RI_Osaka_Okinawa_Normal,,YES,https://travel.safariportal.app/Transfer-Osaka-to-OkinawaOsakaOkinawaNormal?id=12144289&type=agent,05/18,,,Kansai Airport,Naha Airport,,
+70,Osaka,Okinawa,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",RI_Osaka_Okinawa_High,,YES,https://travel.safariportal.app/Transfer-Osaka-to-OkinawaOsakaOkinawaHigh?id=12144346&type=agent,05/18,,,Kansai Airport,Naha Airport,,
+71,Okinawa,Osaka,Normal,1. Flight Okinawa → Osaka,RI_Okinawa_Osaka_Normal,,YES,https://travel.safariportal.app/Transfer-Okinawa-to-OsakaOkinawaOsakaNormal?id=12144389&type=agent,05/18,,,Naha Airport,Kansai Airport,,
+72,Okinawa,Osaka,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",RI_Okinawa_Osaka_High,,YES,https://travel.safariportal.app/Transfer-Okinawa-to-OsakaOkinawaOsakaHigh?id=12144422&type=agent,05/18,,,Naha Airport,Kansai Airport,,
+73,Okinawa,Ishigaki,Normal,1. Flight Okinawa → Ishigaki,RI_Okinawa_Ishigaki_Normal,,YES,https://travel.safariportal.app/Transfer-Okinawa-to-IshigakiOkinawaIshigakiNormal?id=12144551&type=agent,05/18,,,Naha Airport,Ishigaki Airport,,
+74,Okinawa,Ishigaki,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",RI_Okinawa_Ishigaki_High,,YES,https://travel.safariportal.app/Transfer-Okinawa-to-IshigakiOkinawaIshigakiHigh?id=12144576&type=agent,05/18,,,Naha Airport,Ishigaki Airport,,
+75,Ishigaki,Okinawa,Normal,1. Flight Ishigaki → Okinawa,RI_Ishigaki_Okinawa_Normal,,YES,https://travel.safariportal.app/Transfer-Ishigaki-to-OkinawaIshigakiOkinawaNormal?id=12144755&type=agent,05/18,,,Ishigaki Airport,Naha Airport,,
+76,Ishigaki,Okinawa,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",RI_Ishigaki_Okinawa_High,,YES,https://travel.safariportal.app/Transfer-Ishigaki-to-OkinawaIshigakiOkinawaHigh?id=12144770&type=agent,05/18,,,Ishigaki Airport,Naha Airport,,
+77,Okinawa,Miyakojima,Normal,1. Flight Okinawa → Miyako,RI_Okinawa_Miyakojima_Normal,,YES,https://travel.safariportal.app/Transfer-Okinawa-to-MiyakojimaOkinawaMiyakojimaNormal?id=12144835&type=agent,05/18,,,Naha Airport,Miyako Airport,,
+78,Okinawa,Miyakojima,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",RI_Okinawa_Miyakojima_High,,YES,https://travel.safariportal.app/Transfer-Okinawa-to-MiyakojimaOkinawaMiyakojimaHigh?id=12144893&type=agent,05/18,,,Naha Airport,Miyako Airport,,
+79,Miyakojima,Okinawa,Normal,1. Flight Miyako → Okinawa,RI_Miyakojima_Okinawa_Normal,,YES,https://travel.safariportal.app/Transfer-Miyakojima-to-OkinawaMiyakojimaOkinawaNormal?id=12144979&type=agent,05/18,,,Miyako Airport,Naha Airport,,
+80,Miyakojima,Okinawa,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",RI_Miyakojima_Okinawa_High,,YES,https://travel.safariportal.app/Transfer-Miyakojima-to-OkinawaMiyakojimaOkinawaHigh?id=12144991&type=agent,05/18,,,Miyako Airport,Naha Airport,,
+81,Tokyo,Ishigaki,Normal,1. Flight Tokyo → Ishigaki,Transfer Tokyo to Ishigaki,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-IshigakiTokyoIshigakiNormal?id=12145114&type=agent,05/18,,,Haneda Airport,Ishigaki Airport,,
+82,Tokyo,Ishigaki,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",Transfer Tokyo to Ishigaki,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-IshigakiTokyoIshigakiHigh?id=12145234&type=agent,05/18,,,Haneda Airport,Ishigaki Airport,,
+83,Ishigaki,Tokyo,Normal,1. Flight Ishigaki → Tokyo,Transfer Ishigaki to Tokyo ,,YES,https://travel.safariportal.app/Transfer-Ishigaki-to-TokyoIshigakiTokyoNormal?id=12145317&type=agent,05/18,,,Ishigaki Airport,Haneda Airport,,
+84,Ishigaki,Tokyo,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",Transfer Ishigaki to Tokyo ,,YES,https://travel.safariportal.app/Transfer-Ishigaki-to-TokyoIshigakiTokyoHigh?id=12145339&type=agent,05/18,,,Ishigaki Airport,Haneda Airport,,
+85,Tokyo,Miyakojima,Normal,1. Flight Tokyo → Miyako,Transfer Tokyo to Miyakojima,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-MiyakojimaTokyoMiyakojimaNormal?id=12145372&type=agent,05/18,,,Haneda Airport,Miyako Airport,,
+86,Tokyo,Miyakojima,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",Transfer Tokyo to Miyakojima,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-MiyakojimaTokyoMiyakojimaHigh?id=12145406&type=agent,05/18,,,Haneda Airport,Miyako Airport,,
+87,Miyakojima,Tokyo,Normal,1. Flight Miyako → Tokyo,Transfer Miyakojima to Tokyo,,YES,https://travel.safariportal.app/Transfer-Miyakojima-to-TokyoMiyakojimaTokyoNormal?id=12145492&type=agent,05/18,,,Miyako Airport,Haneda Airport,,
+88,Miyakojima,Tokyo,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",Transfer Miyakojima to Tokyo,,YES,https://travel.safariportal.app/Transfer-Miyakojima-to-TokyoMiyakojimaTokyoHigh?id=12145497&type=agent,05/18,,,Miyako Airport,Haneda Airport,,
+89,Tokyo,Sapporo,Normal,1. Flight Tokyo → Sapporo,Transfer Tokyo to Sapporo,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-SapporoTokyoSapporoNormal?id=12145549&type=agent,05/18,,,Haneda Airport,New Chitose Airport,,
+90,Tokyo,Sapporo,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",Transfer Tokyo to Sapporo,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-SapporoTokyoSapporoHigh?id=12145584&type=agent,05/18,,,Haneda Airport,New Chitose Airport,,
+91,Sapporo,Tokyo,Normal,1. Flight Sapporo → Tokyo,Transfer Sapporo to Tokyo,,YES,https://travel.safariportal.app/Transfer-Sapporo-to-TokyoSapporoTokyoNormal?id=12145603&type=agent,05/18,,,New Chitose Airport,Haneda Airport,,
+92,Sapporo,Tokyo,High,"1. Private transfer Hotel → Airport
+2. Flight (Premium Class)
+3. Private transfer Airport → Hotel",Transfer Sapporo to Tokyo,,YES,https://travel.safariportal.app/Transfer-Sapporo-to-TokyoSapporoTokyoHigh?id=12145643&type=agent,05/18,,,New Chitose Airport,Haneda Airport,,
+93,Sapporo,Niseko,Normal,1. Airport shuttle New Chitose → Niseko,Transfer Sapporo to Niseko,,YES,https://travel.safariportal.app/Transfer-Sapporo-to-NisekoSapporoNisekoNormal?id=12145672&type=agent,05/18,,,New Chitose Airport,Niseko,,
+94,Sapporo,Niseko,High,1. Private transfer New Chitose → Niseko,Transfer Sapporo to Niseko,,YES,https://travel.safariportal.app/Transfer-Sapporo-to-NisekoSapporoNisekoHigh?id=12145715&type=agent,05/18,,,New Chitose Airport,Niseko,,
+95,Niseko,Sapporo,Normal,1. Shuttle Niseko → New Chitose,Transfer Niseko to Sapporo,,YES,https://travel.safariportal.app/Transfer-Niseko-to-SapporoNisekoSapporoNormal?id=12145882&type=agent,05/18,,,Niseko,New Chitose Airport,,
+96,Niseko,Sapporo,High,1. Private transfer Niseko → New Chitose,Transfer Niseko to Sapporo,,YES,https://travel.safariportal.app/Transfer-Niseko-to-SapporoNisekoSapporoHigh?id=12145964&type=agent,05/18,,,Niseko,New Chitose Airport,,
+97,Naoshima,Setoda,Normal,"1. Ferry Naoshima (Miyanoura Port) → Uno Port
+ 2. Local train Uno → Okayama
+ 3. Shinkansen Okayama → Mihara
+ 4. Ferry Mihara Port → Setoda Port",Transfer Naoshima to Setoda,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-SetodaNaoshimaSetodaNormal?id=12156888&type=agent,05/19,,,,,OK,
+98,Naoshima,Setoda,High,"1. Hotel courtesy car to Miyanoura Port
+ 2. Ferry Naoshima → Uno Port
+ 3. Private transfer Uno → Okayama Station
+ 4. Shinkansen (Green Class) Okayama → Mihara
+ 5. Private transfer Mihara Station → Mihara Port
+ 6. Ferry Mihara Port → Setoda Port",Transfer Naoshima to Setoda,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-SetodaNaoshimaSetodaHigh?id=12157208&type=agent,05/19,,,,,OK,
+99,Setoda,Naoshima,Normal,"1. Ferry Setoda Port → Mihara Port
+ 2. Shinkansen Mihara → Okayama
+ 3. Local bus / taxi Okayama → Uno Port
+ 4. Ferry Uno → Naoshima (Miyanoura Port)",Transfer Setoda to Naoshima,,YES,https://travel.safariportal.app/Transfer-Setoda-to-NaoshimaSetodaNaoshimaNormal?id=12176278&type=agent,05/21,,,,,OK,
+100,Setoda,Naoshima,High,"2. Ferry Setoda Port → Mihara Port
+ 3. Private transfer Mihara Port → Mihara Station
+ 4. Shinkansen (Green Class) Mihara → Okayama
+ 5. Private transfer Okayama Station → Uno Port
+ 6. Ferry Uno → Naoshima (Miyanoura Port)
+ 7. Hotel courtesy car / private transfer to Hotel",Transfer Setoda to Naoshima,,YES,https://travel.safariportal.app/Transfer-Setoda-to-NaoshimaSetodaNaoshimaHigh?id=12197126&type=agent,05/21,,,,,OK,
+101,Hakone,Kiso Valley,Normal,"1. Local train / rental car return to Odawara Station
+ 2. Shinkansen Odawara → Nagoya
+ 3. JR Limited Express Shinano Nagoya → Kiso Valley arrival station (see note)
+ 4. Local train / taxi / hotel courtesy car to accommodation",Transfer Hakone to Kiso Valley,,YES,https://travel.safariportal.app/Transfer-Hakone-to-Kiso-ValleyHakoneKiso-ValleyNormal?id=12214054&type=agent,46167,,,,,1. Local train / rental car return to Odawara Station → 2. Shinkansen Odawara → Nagoya → 3. JR Limited Express Shinano Nagoya → Kiso-Fukushima Station → 4. Hotel courtesy car / taxi to accommodation,
+102,Hakone,Kiso Valley,High,"1. Private transfer Hotel → Odawara Station
+ 2. Shinkansen (Green Class) Odawara → Nagoya
+ 3. JR Limited Express Shinano (Green Car) Nagoya → Kiso Valley arrival station (see note)
+ 4. Private transfer to accommodation",Transfer Hakone to Kiso Valley,,YES,https://travel.safariportal.app/Transfer-Hakone-to-Kiso-ValleyHakoneKiso-ValleyHigh?id=12214103&type=agent,46167,,,,,1. Private transfer Hotel → Odawara Station → 2. Shinkansen (Green Class) Odawara → Nagoya → 3. JR Limited Express Shinano (Green Car) Nagoya → Kiso-Fukushima Station → 4. Private transfer to accommodatio,
+103,Kiso Valley,Kyoto,Normal,"1. Hotel courtesy car / local train to departure station (see note — Nagiso → via Nakatsugawa, or direct from Nakatsugawa / Kiso-Fukushima)
+ 2. JR Limited Express Shinano → Nagoya
+ 3. Shinkansen Nagoya → Kyoto",Transfer Kiso Valley to Kyoto,,YES,https://travel.safariportal.app/Transfer-Kiso-Valley-to-KyotoKiso-ValleyKyotoNormal?id=12214185&type=agent,46167,,,,,1. Hotel courtesy car / taxi to Kiso-Fukushima Station → 2. JR Limited Express Shinano Kiso-Fukushima → Nagoya → 3. Shinkansen Nagoya → Kyoto,
+104,Kiso Valley,Kyoto,High,"1. Private transfer from accommodation to Nagoya Station
+ 2. Shinkansen (Green Class) Nagoya → Kyoto
+ 3. Private transfer to Hotel",Transfer Kiso Valley to Kyoto,,YES,https://travel.safariportal.app/Transfer-Kiso-Valley-to-KyotoKiso-ValleyKyotoHigh?id=12214219&type=agent,05/25,,,,,1. Private transfer to Kiso-Fukushima Station → 2. JR Limited Express Shinano (Green Car) Kiso-Fukushima → Nagoya → 3. Shinkansen (Green Class) Nagoya → Kyoto → 4. Private transfer to Hotel,
+105,Osaka,Setoda,Normal,"1. Shinkansen Shin-Osaka → Mihara (via Fukuyama or Hiroshima)
+ 2. Ferry Mihara Port → Setoda Port",Transfer Osaka to Setoda,,YES,https://travel.safariportal.app/Transfer-Osaka-to-SetodaOsakaSetodaNormal?id=12214358&type=agent,05/25,,,,,1. Shinkansen Shin-Osaka → Mihara Station → 2. Local bus / taxi Mihara Station → Mihara Port → 3. Ferry Mihara Port → Setoda Port,
+106,Osaka,Setoda,High,"1. Private transfer to Shin-Osaka Station
+ 2. Shinkansen (Green Class) Shin-Osaka → Mihara
+ 3. Private transfer Mihara Station → Mihara Port
+ 4. Ferry Mihara Port → Setoda Port",Transfer Osaka to Setoda,,YES,https://travel.safariportal.app/Transfer-Osaka-to-SetodaOsakaSetodaHigh?id=12214402&type=agent,05/25,,,,,OK,
+107,Kamikochi,Tokyo,Normal,"1. Local bus Kamikochi Bus Terminal → Matsumoto / Sawando Bus Terminal
+ 2. JR Limited Express Azusa Matsumoto → Shinjuku",Transfer Kamikochi to Tokyo,,YES,https://travel.safariportal.app/Transfer-Kamikochi-to-TokyoKamikochiTokyoNormal?id=12214677&type=agent,05/25,,,,,,
+108,Kamikochi,Tokyo,High,"1. Private transfer Kamikochi → Matsumoto Station (via rental car / hotel courtesy car)
+ 2. JR Limited Express Azusa (Green Car) Matsumoto → Shinjuku
+ 3. Private transfer to Hotel",Transfer Kamikochi to Tokyo,,YES,https://travel.safariportal.app/Transfer-Kamikochi-to-TokyoKamikochiTokyoHigh?id=12214728&type=agent,05/25,,,,,,
+109,Kamikochi,Kyoto,Normal,"1. Local bus Kamikochi → Sawando / Hirayu
+ 2. Rental car / taxi to Takayama Station
+ 3. JR Limited Express Hida Takayama → Nagoya
+ 4. Shinkansen Nagoya → Kyoto",Transfer Kamikochi to Kyoto,,YES,https://travel.safariportal.app/Transfer-Kamikochi-to-KyotoKamikochiKyotoNormal?id=12214753&type=agent,05/25,,,,,,
+110,Kamikochi,Kyoto,High,"1. Private transfer Kamikochi → Takayama Station
+ 2. JR Limited Express Hida (Green Car) Takayama → Nagoya
+ 3. Shinkansen (Green Class) Nagoya → Kyoto
+ 4. Private transfer to Hotel",Transfer Kamikochi to Kyoto,,YES,https://travel.safariportal.app/Transfer-Kamikochi-to-KyotoKamikochiKyotoHigh?id=12214846&type=agent,05/25,,,,,,
+111,Kiso Valley,Hakone,Normal,"1. Hotel courtesy car / local train to departure station (see note)
+ 2. JR Limited Express Shinano → Nagoya
+ 3. Shinkansen Nagoya → Odawara
+ 4. Rent a car from Odawara Station",Transfer Kiso Valley to Hakone,,YES,https://travel.safariportal.app/Transfer-Kiso-Valley-to-HakoneKiso-ValleyHakoneNormal?id=12215001&type=agent,05/25,,,,,1. Hotel courtesy car / taxi to Kiso-Fukushima Station → 2. JR Limited Express Shinano Kiso-Fukushima → Nagoya → 3. Shinkansen Nagoya → Odawara → 4. Rental car pick-up / local transfer from Odawara Station,
+112,Kiso Valley,Hakone,High,"1. Private transfer from accommodation to Nagoya Station
+ 2. Shinkansen (Green Class) Nagoya → Odawara
+ 3. Rent a car / private transfer to Hotel",Transfer Kiso Valley to Hakone,,YES,https://travel.safariportal.app/Transfer-Kiso-Valley-to-HakoneKiso-ValleyHakoneHigh?id=12215039&type=agent,05/25,,,,,1. Private transfer to Kiso-Fukushima Station → 2. JR Limited Express Shinano (Green Car) Kiso-Fukushima → Nagoya → 3. Shinkansen (Green Class) Nagoya → Odawara → 4. Private transfer to Hotel,
+113,Osaka,Tokyo,Normal,1. Shinkansen Shin-Osaka → Tokyo,Transfer Osaka to Tokyo,,YES,https://travel.safariportal.app/Transfer-Osaka-to-TokyoOsakaTokyoNormal?id=12215070&type=agent,05/25,,,,,,
+114,Osaka,Tokyo,High,"1. Private transfer to Shin-Osaka Station
+ 2. Shinkansen (Green Class) Shin-Osaka → Tokyo
+ 3. Private transfer to Hotel",Transfer Osaka to Tokyo,,YES,https://travel.safariportal.app/Transfer-Osaka-to-TokyoOsakaTokyoHigh?id=12215109&type=agent,05/25,,,,,,
+115,Tokyo,Kamikochi,Normal,"1. JR Limited Express Azusa Shinjuku → Matsumoto
+ 2. Local bus / rental car Matsumoto → Sawando / Kamikochi Bus Terminal",Transfer Tokyo to Kamikochi,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-Kamikochi-TokyoKamikochiNormal?id=12215249&type=agent,05/25,,,,,,
+116,Tokyo,Kamikochi,High,"1. Private transfer Hotel → Shinjuku Station
+ 2. JR Limited Express Azusa (Green Car) Shinjuku → Matsumoto
+ 3. Private transfer Matsumoto → Kamikochi Bus Terminal",Transfer Tokyo to Kamikochi,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-Kamikochi-TokyoKamikochiHigh?id=12215284&type=agent,05/25,,,,,,
+117,Kiso Valley,Tokyo,Normal,"1. Hotel courtesy car / local train to departure station (see note)
+ 2. JR Limited Express Shinano → Nagoya
+ 3. Shinkansen Nagoya → Tokyo / Shinagawa",Transfer Kiso Valley to Tokyo,,YES,https://travel.safariportal.app/Transfer-Kiso-Valley-to-TokyoKiso-ValleyTokyoNormal?id=12215360&type=agent,05/25,,,,,1. Hotel courtesy car / taxi to Kiso-Fukushima Station → 2. JR Limited Express Shinano Kiso-Fukushima → Nagoya → 3. Shinkansen Nagoya → Tokyo / Shinagawa,
+118,Kiso Valley,Tokyo,High,"1. Private transfer from accommodation to Nagoya Station
+ 2. Shinkansen (Green Class) Nagoya → Tokyo / Shinagawa
+ 3. Private transfer to Hotel",Transfer Kiso Valley to Tokyo,,YES,https://travel.safariportal.app/Transfer-Kiso-Valley-to-TokyoKiso-ValleyTokyoHigh?id=12215413&type=agent,05/25,,,,,1. Private transfer to Kiso-Fukushima Station → 2. JR Limited Express Shinano (Green Car) Kiso-Fukushima → Nagoya → 3. Shinkansen (Green Class) Nagoya → Tokyo / Shinagawa → 4. Private transfer to Hotel,
+119,Kyoto,Kiso Valley,Normal,"1. Shinkansen Kyoto → Nagoya
+ 2. JR Limited Express Shinano Nagoya → Kiso Valley arrival station (see note)
+ 3. Local train / taxi / hotel courtesy car to accommodation",Transfer Kyoto to Kiso Valley,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-Kiso-Valley-KyotoKiso-ValleyNormal?id=12215417&type=agent,05/25,,,,,1. Shinkansen Kyoto → Nagoya → 2. JR Limited Express Shinano Nagoya → Kiso-Fukushima Station → 3. Hotel courtesy car / taxi to accommodation,
+120,Kyoto,Kiso Valley,High,"1. Private transfer to Kyoto Station
+ 2. Shinkansen (Green Class) Kyoto → Nagoya
+ 3. Private transfer Nagoya → accommodation",Transfer Kyoto to Kiso Valley,,YES,https://travel.safariportal.app/Transfer-Kyoto-to-Kiso-ValleyKyotoKiso-ValleyHigh?id=12215475&type=agent,05/25,,,,,. Private transfer to Kyoto Station → 2. Shinkansen (Green Class) Kyoto → Nagoya → 3. JR Limited Express Shinano (Green Car) Nagoya → Kiso-Fukushima Station → 4. Private transfer to accommodation,
+121,Koyasan,Naoshima,Normal,"1. Cable car train Koyasan → Gokurakubashi Station
+ 2. Various trains Gokurakubashi → Shin-Osaka
+ 3. Shinkansen Shin-Osaka → Okayama
+ 4. Local bus / taxi Okayama → Uno Port
+ 5. Ferry Uno → Naoshima (Miyanoura Port)",Transfer Koyasan to Naoshima,,YES,https://travel.safariportal.app/Transfer-Koyasan-to-NaoshimaKoyasanNaoshimaNormal?id=12215681&type=agent,05/25,,,,,,
+122,Koyasan,Naoshima,High,"1. Private transfer Koyasan → Shin-Osaka Station
+ 2. Shinkansen (Green Class) Shin-Osaka → Okayama
+ 3. Private transfer Okayama Station → Uno Port
+ 4. Ferry Uno → Naoshima (Miyanoura Port)
+ 5. Hotel courtesy car / private transfer to Hotel",Transfer Koyasan to Naoshima,,YES,https://travel.safariportal.app/Transfer-Koyasan-to-NaoshimaKoyasanNaoshimaHigh?id=12215840&type=agent,05/25,,,,,,
+123,Kumano Kodo,Kyoto,Normal,"1. Local bus / local train to Shingu / Kii-Katsuura Station
+ 2. JR Limited Express Kuroshio Shingu → Shin-Osaka
+ 3. Local train Shin-Osaka → Kyoto",Transfer Kumano Kodo to Kyoto,,YES,https://travel.safariportal.app/Transfer-Kumano-Kodo-to-KyotoKumano-KodoKyotoNormal?id=12253496&type=agent,05/25,,,,,1. Local bus / local train to Shingu Station → 2. JR Limited Express Kuroshio Shingu → Shin-Osaka → 3. Local train Shin-Osaka → Kyoto,
+124,Kumano Kodo,Kyoto,High,"1. Private transfer to Shingu / Kii-Katsuura Station
+ 2. JR Limited Express Kuroshio (Green Car) Shingu → Shin-Osaka
+ 3. Private transfer to Hotel",Transfer Kumano Kodo to Kyoto,,YES,https://travel.safariportal.app/Transfer-Kumano-Kodo-to-KyotoKumano-KodoKyotoHigh?id=12253519&type=agent,05/25,,,,,1. Private transfer to Shingu Station → 2. JR Limited Express Kuroshio (Green Car) Shingu → Shin-Osaka → 3. Private transfer Shin-Osaka Station → Hotel,
+125,Naoshima,Tokyo,Normal,"1. Ferry Naoshima (Miyanoura Port) → Uno Port
+ 2. Local bus / taxi Uno → Okayama Station
+ 3. Shinkansen Okayama → Tokyo / Shinagawa",Transfer Naoshima to Tokyo,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-TokyoNaoshimaTokyoNormal?id=12253522&type=agent,05/25,,,,,,
+126,Naoshima,Tokyo,High,"1. Hotel courtesy car / private transfer to Miyanoura Port
+ 2. Ferry Naoshima → Uno Port
+ 3. Private transfer Uno → Okayama Station
+ 4. Shinkansen (Green Class) Okayama → Tokyo / Shinagawa
+ 5. Private transfer to Hotel",Transfer Naoshima to Tokyo,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-TokyoNaoshimaTokyoHigh?id=12253524&type=agent,05/25,,,,,,
+127,Niseko,Tokyo,Normal,"1. Shuttle Niseko → New Chitose Airport
+ 2. Flight New Chitose → Tokyo (Haneda or Narita)",Transfer Niseko to Tokyo,,YES,https://travel.safariportal.app/Transfer-Niseko-to-TokyoNisekoTokyoNormal?id=12253532&type=agent,05/25,,,,,,
+128,Niseko,Tokyo,High,"1. Private transfer Niseko → New Chitose Airport
+ 2. Flight (Premium Class) New Chitose → Tokyo
+ 3. Private transfer Airport → Hotel",Transfer Niseko to Tokyo,,YES,https://travel.safariportal.app/Transfer-Niseko-to-TokyoNisekoTokyoHigh?id=12253535&type=agent,05/25,,,,,,
+129,Setoda,Osaka,Normal,"1. Ferry Setoda Port → Mihara Port
+ 2. Shinkansen Mihara → Fukuyama
+ 3. Shinkansen Fukuyama → Shin-Osaka",Transfer Setoda to Osaka,,YES,https://travel.safariportal.app/Transfer-Setoda-to-OsakaSetodaOsakaNormal?id=12253561&type=agent,05/25,,,,,1. Ferry Setoda Port → Mihara Port → 2. Local bus / taxi Mihara Port → Mihara Station → 3. Shinkansen Mihara → Shin-Osaka,
+130,Setoda,Osaka,High,"1. Hotel courtesy car / private transfer to Setoda Port
+ 2. Ferry Setoda Port → Mihara Port
+ 3. Private transfer Mihara Port → Mihara Station
+ 4. Shinkansen (Green Class) Mihara → Shin-Osaka
+ 5. Private transfer to Hotel",Transfer Setoda to Osaka,,YES,https://travel.safariportal.app/Transfer-Setoda-to-OsakaSetodaOsakaHigh?id=12253602&type=agent,05/25,,,,,OK,
+131,Setoda,Tokyo,Normal,"1. Ferry Setoda Port → Mihara Port
+ 2. Shinkansen Mihara → Fukuyama / Okayama
+ 3. Shinkansen Fukuyama / Okayama → Tokyo / Shinagawa",Transfer Setoda to Tokyo,,YES,https://travel.safariportal.app/Transfer-Setoda-to-TokyoSetodaTokyoNormal?id=12253654&type=agent,05/25,,,,,1. Ferry Setoda Port → Mihara Port → 2. Local bus / taxi Mihara Port → Mihara Station → 3. Shinkansen Mihara → Tokyo / Shinagawa,
+132,Setoda,Tokyo,High,"1. Hotel courtesy car / private transfer to Setoda Port
+ 2. Ferry Setoda Port → Mihara Port
+ 3. Private transfer Mihara Port → Mihara Station
+ 4. Shinkansen (Green Class) Mihara → Tokyo / Shinagawa
+ 5. Private transfer to Hotel",Transfer Setoda to Tokyo,,YES,https://travel.safariportal.app/Transfer-Setoda-to-TokyoSetodaTokyoHigh?id=12253671&type=agent,05/25,,,,,OK,
+133,Ishigaki,Osaka,Normal,1. Flight Ishigaki → Osaka (Kansai International),Transfer Ishigaki to Osaka,,YES,https://travel.safariportal.app/Transfer-Ishigaki-to-OsakaIshigakiOsakaNormal?id=12253706&type=agent,05/25,,,,,,
+134,Ishigaki,Osaka,High,"1. Private transfer Hotel → New Ishigaki Airport
+ 2. Flight (Premium Class) Ishigaki → Osaka
+ 3. Private transfer Airport → Hotel",Transfer Ishigaki to Osaka,,YES,https://travel.safariportal.app/Transfer-Ishigaki-to-OsakaIshigakiOsakaHigh?id=12253712&type=agent,05/25,,,,,,
+135,Kanazawa,Kyoto,Normal,"1. Shinkansen Kanazawa → Tsuruga
+ 2. JR Limited Express Thunderbird Tsuruga → Kyoto",Transfer Kanazawa to Kyoto,,YES,https://travel.safariportal.app/Transfer-Kanazawa-to-KyotoKanazawaKyotoNormal?id=12253736&type=agent,05/25,,,,,,
+136,Kanazawa,Kyoto,High,"1. Private transfer to Kanazawa Station
+ 2. Shinkansen (Green Class) Kanazawa → Tsuruga
+ 3. JR Limited Express Thunderbird (Green Car) Tsuruga → Kyoto
+ 4. Private transfer to Hotel",Transfer Kanazawa to Kyoto,,YES,https://travel.safariportal.app/Transfer-Kanazawa-to-KyotoKanazawaKyotoHigh?id=12253743&type=agent,05/25,,,,,,
+137,Kawaguchiko,Kyoto,Normal,"1. Return rental car / private transfer to Mishima Station
+ 2. Shinkansen Mishima → Kyoto",Transfer Kawaguchiko to Kyoto,,YES,https://travel.safariportal.app/Transfer-Kawaguchiko-to-KyotoKawaguchikoKyotoNormal?id=12253776&type=agent,05/25,,,,,,
+138,Kawaguchiko,Kyoto,High,"1. Private transfer Kawaguchiko → Mishima Station
+ 2. Shinkansen (Green Class) Mishima → Kyoto
+ 3. Private transfer to Hotel",Transfer Kawaguchiko to Kyoto,,YES,,05/25,,,,,,
+139,Naoshima,Hakone,Normal,"1. Ferry Naoshima (Miyanoura Port) → Uno Port
+ 2. Local bus / taxi Uno → Okayama Station
+ 3. Shinkansen Okayama → Odawara (via Nagoya / Shin-Yokohama)
+ 4. Rent a car from Odawara Station",Transfer Naoshima to Hakone,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-HakoneNaoshimaHakoneNormal?id=12253793&type=agent,05/25,,,,,,
+140,Naoshima,Hakone,High,"1. Hotel courtesy car / private transfer to Miyanoura Port
+ 2. Ferry Naoshima → Uno Port
+ 3. Private transfer Uno → Okayama Station
+ 4. Shinkansen (Green Class) Okayama → Odawara
+ 5. Rent a car / private transfer to Hotel",Transfer Naoshima to Hakone,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-HakoneNaoshimaHakoneHigh?id=12253816&type=agent,05/25,,,,,,
+141,Osaka,Hakone,Normal,"1. Shinkansen Shin-Osaka → Odawara
+ 2. Rent a car from Odawara Station",Transfer Osaka to Hakone,,YES,https://travel.safariportal.app/Transfer-Osaka-to-HakoneOsakaHakoneNormal?id=12253837&type=agent,05/25,,,,,,
+142,Osaka,Hakone,High,"1. Private transfer to Shin-Osaka Station
+ 2. Shinkansen (Green Class) Shin-Osaka → Odawara
+ 3. Rent a car / private transfer to Hotel",Transfer Osaka to Hakone,,YES,https://travel.safariportal.app/Transfer-Osaka-to-HakoneOsakaHakoneHigh?id=12253863&type=agent,05/25,,,,,,
+143,Tokyo,Naoshima,Normal,"1. Shinkansen Tokyo → Okayama
+ 2. Local bus / taxi Okayama → Uno Port
+ 3. Ferry Uno → Naoshima (Miyanoura Port)",Transfer Tokyo to Naoshima,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-NaoshimaTokyoNaoshimaNormal?id=12253871&type=agent,05/25,,,,,,
+144,Tokyo,Naoshima,High,"1. Private transfer to Tokyo / Shinagawa Station
+ 2. Shinkansen (Green Class) Tokyo → Okayama
+ 3. Private transfer Okayama Station → Uno Port
+ 4. Ferry Uno → Naoshima (Miyanoura Port)
+ 5. Hotel courtesy car / private transfer to Hotel",Transfer Tokyo to Naoshima,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-NaoshimaTokyoNaoshimaHigh?id=12253937&type=agent,05/25,,,,,,
+145,Hakone,Naoshima,Normal,"1. Local train / rental car return to Odawara Station
+ 2. Shinkansen Odawara → Okayama (via Nagoya)
+ 3. Local bus / taxi Okayama → Uno Port
+ 4. Ferry Uno → Naoshima (Miyanoura Port)",Transfer Hakone to Naoshima,,YES,https://travel.safariportal.app/Transfer-Hakone-to-NaoshimaHakoneNaoshimaNormal?id=12253959&type=agent,05/25,,,,,,
+146,Hakone,Naoshima,High,"1. Private transfer Hotel → Odawara Station
+ 2. Shinkansen (Green Class) Odawara → Okayama
+ 3. Private transfer Okayama Station → Uno Port
+ 4. Ferry Uno → Naoshima (Miyanoura Port)
+ 5. Hotel courtesy car / private transfer to Hotel",Transfer Hakone to Naoshima,,YES,https://travel.safariportal.app/Transfer-Hakone-to-NaoshimaHakoneNaoshimaHigh?id=12253986&type=agent,05/25,,,,,,
+147,Hakone,Osaka,Normal,"1. Return rental car / local train to Odawara Station
+ 2. Shinkansen Odawara → Shin-Osaka",Transfer Hakone to Osaka,,YES,https://travel.safariportal.app/Transfer-Hakone-to-OsakaHakoneOsakaNormal?id=12254001&type=agent,05/25,,,,,,
+148,Hakone,Osaka,High,"1. Private transfer Hotel → Odawara Station
+ 2. Shinkansen (Green Class) Odawara → Shin-Osaka
+ 3. Private transfer to Hotel",Transfer Hakone to Osaka,,YES,https://travel.safariportal.app/Transfer-Hakone-to-OsakaHakoneOsakaHigh?id=12254037&type=agent,05/25,,,,,,
+149,Hakone,Setoda,Normal,"1. Return rental car / local train to Odawara Station
+ 2. Shinkansen Odawara → Mihara (via Nagoya / Fukuyama)
+ 3. Ferry Mihara Port → Setoda Port",Transfer Hakone to Setoda,,YES,https://travel.safariportal.app/Transfer-Hakone-to-SetodaHakoneSetodaNormal?id=12254048&type=agent,05/25,,,,,1. Return rental car / local train to Odawara Station → 2. Shinkansen Odawara → Mihara → 3. Local bus / taxi Mihara Station → Mihara Port → 4. Ferry Mihara Port → Setoda Port,
+150,Hakone,Setoda,High,"1. Private transfer Hotel → Odawara Station
+ 2. Shinkansen (Green Class) Odawara → Mihara
+ 3. Private transfer Mihara Station → Mihara Port
+ 4. Ferry Mihara Port → Setoda Port",Transfer Hakone to Setoda,,YES,https://travel.safariportal.app/Transfer-Hakone-to-SetodaHakoneSetodaHigh?id=12254064&type=agent,05/25,,,,,OK,
+151,Kamikochi,Kiso Valley,Normal,"1. Local bus Kamikochi → Matsumoto / Hirayu Bus Terminal
+ 2. Rent a car / JR Limited Express Shinano to Kiso Valley station (see note)
+ 3. Local train / taxi to accommodation",Transfer Kamikochi to Kiso Valley,,YES,https://travel.safariportal.app/Transfer-Kamikochi-to-Kiso-ValleyKamikochiKiso-ValleyNormal?id=12254089&type=agent,05/25,,,,,1. Local bus Kamikochi → Matsumoto Bus Terminal → 2. JR Limited Express Shinano Matsumoto → Kiso-Fukushima Station → 3. Hotel courtesy car / taxi to accommodation,
+152,Kamikochi,Kiso Valley,High,1. Private transfer Kamikochi → Kiso Valley accommodation (door to door),Transfer Kamikochi to Kiso Valley,,YES,https://travel.safariportal.app/Transfer-Kamikochi-to-Kiso-ValleyKamikochiKiso-ValleyHigh?id=12254130&type=agent,05/25,,,,,OK,
+153,Kiso Valley,Naoshima,Normal,"1. Hotel courtesy car / local train to departure station (see note)
+ 2. JR Limited Express Shinano → Nagoya
+ 3. Shinkansen Nagoya → Okayama
+ 4. Local bus / taxi Okayama → Uno Port
+ 5. Ferry Uno → Naoshima (Miyanoura Port)",Transfer Kiso Valley to Naoshima,,YES,https://travel.safariportal.app/Transfer-Kiso-Valley-to-NaoshimaKiso-ValleyNaoshimaNormal?id=12254168&type=agent,05/25,,,,,1. Hotel courtesy car / taxi to Kiso-Fukushima Station → 2. JR Limited Express Shinano Kiso-Fukushima → Nagoya → 3. Shinkansen Nagoya → Okayama → 4. Local bus / taxi Okayama → Uno Port → 5. Ferry Uno → Naoshima (Miyanoura Port),
+154,Kiso Valley,Naoshima,High,"1. Private transfer from accommodation to Nagoya Station
+ 2. Shinkansen (Green Class) Nagoya → Okayama
+ 3. Private transfer Okayama Station → Uno Port
+ 4. Ferry Uno → Naoshima (Miyanoura Port)
+ 5. Hotel courtesy car / private transfer to Hotel",Transfer Kiso Valley to Naoshima,,YES,https://travel.safariportal.app/Transfer-Kiso-Valley-to-NaoshimaKiso-ValleyNaoshimaHigh?id=12254327&type=agent,05/25,,,,,1. Private transfer to Kiso-Fukushima Station → 2. JR Limited Express Shinano (Green Car) Kiso-Fukushima → Nagoya → 3. Shinkansen (Green Class) Nagoya → Okayama → 4. Private transfer Okayama Station → Uno Port → 5. Ferry Uno → Naoshima (Miyanoura Port) → 6. Hotel courtesy car / private transfer to Hotel,
+155,Naoshima,Kiso Valley,Normal,"1. Ferry Naoshima (Miyanoura Port) → Uno Port
+ 2. Local train / taxi Uno → Okayama
+ 3. Shinkansen Okayama → Nagoya
+ 4. JR Limited Express Shinano Nagoya → Kiso Valley arrival station (see note)
+ 5. Local train / taxi / hotel courtesy car to accommodation",Transfer Naoshima to Kiso Valley,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-Kiso-ValleyNaoshimaKiso-ValleyNormal?id=12254467&type=agent,05/25,,,,,1. Ferry Naoshima (Miyanoura Port) → Uno Port → 2. Local train / taxi Uno → Okayama → 3. Shinkansen Okayama → Nagoya → 4. JR Limited Express Shinano Nagoya → Kiso-Fukushima Station → 5. Hotel courtesy car / taxi to accommodation,
+156,Naoshima,Kiso Valley,High,"1. Hotel courtesy car / private transfer Naoshima → Miyanoura Port
+ 2. Ferry Naoshima → Uno Port
+ 3. Private transfer Uno → Okayama Station
+ 4. Shinkansen (Green Class) Okayama → Nagoya
+ 5. Private transfer Nagoya → accommodation",Transfer Naoshima to Kiso Valley,,YES,https://travel.safariportal.app/Transfer-Naoshima-to-Kiso-ValleyNaoshimaKiso-ValleyHigh?id=12254581&type=agent,05/25,,,,,1. Hotel courtesy car / private transfer Naoshima → Miyanoura Port → 2. Ferry Naoshima → Uno Port → 3. Private transfer Uno → Okayama Station → 4. Shinkansen (Green Class) Okayama → Nagoya → 5. JR Limited Express Shinano (Green Car) Nagoya → Kiso-Fukushima Station → 6. Private transfer to accommodation,
+157,Setoda,Hakone,Normal,"1. Ferry Setoda Port → Mihara Port
+ 2. Shinkansen Mihara → Odawara (via Fukuyama / Nagoya)
+ 3. Rent a car from Odawara Station",Transfer Setoda to Hakone,,YES,https://travel.safariportal.app/Transfer-Setoda-to-HakoneSetodaHakoneNormal?id=12254736&type=agent,05/25,,,,,1. Ferry Setoda Port → Mihara Port → 2. Local bus / taxi Mihara Port → Mihara Station → 3. Shinkansen Mihara → Odawara → 4. Rental car pick-up / local transfer from Odawara Station,
+158,Setoda,Hakone,High,"1. Hotel courtesy car / private transfer to Setoda Port
+ 2. Ferry Setoda Port → Mihara Port
+ 3. Private transfer Mihara Port → Mihara Station
+ 4. Shinkansen (Green Class) Mihara → Odawara
+ 5. Rent a car / private transfer to Hotel",Transfer Setoda to Hakone,,YES,https://travel.safariportal.app/Transfer-Setoda-to-HakoneSetodaHakoneHigh?id=12254840&type=agent,05/25,,,,,OK,
+159,Tokyo,Kiso Valley,Normal,"1. Shinkansen Tokyo / Shinagawa → Nagoya
+ 2. JR Limited Express Shinano Nagoya → Kiso Valley arrival station (see note)
+ 3. Local train / taxi / hotel courtesy car to accommodation",Transfer Tokyo to Kiso Valley,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-Kiso-ValleyTokyoKiso-ValleyNormal?id=12255006&type=agent,05/25,,,,,1. Shinkansen Tokyo / Shinagawa → Nagoya → 2. JR Limited Express Shinano Nagoya → Kiso-Fukushima Station → 3. Hotel courtesy car / taxi to accommodation,
+160,Tokyo,Kiso Valley,High,"1. Private transfer Hotel → Tokyo / Shinagawa Station
+ 2. Shinkansen (Green Class) Tokyo → Nagoya
+ 3. Private transfer Nagoya → accommodation",Transfer Tokyo to Kiso Valley,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-Kiso-ValleyTokyoKiso-ValleyHigh?id=12255147&type=agent,05/25,,,,,1. Private transfer Hotel → Tokyo / Shinagawa Station → 2. Shinkansen (Green Class) Tokyo → Nagoya → 3. JR Limited Express Shinano (Green Car) Nagoya → Kiso-Fukushima Station → 4. Private transfer to accommodation,
+161,Tokyo,Osaka,Normal,1. Shinkansen Tokyo / Shinagawa → Shin-Osaka,Transfer Tokyo to Osaka,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-OsakaTokyoOsakaNormal?id=12255208&type=agent,05/25,,,,,,
+162,Tokyo,Osaka,High,"1. Private transfer to Tokyo / Shinagawa Station
+ 2. Shinkansen (Green Class) Tokyo → Shin-Osaka
+ 3. Private transfer to Hotel",Transfer Tokyo to Osaka,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-OsakaTokyoOsakaHigh?id=12255238&type=agent,05/25,,,,,,
+163,Tokyo,Setoda,Normal,"1. Shinkansen Tokyo → Mihara (via Hiroshima or Fukuyama)
+ 2. Ferry Mihara Port → Setoda Port",Transfer Tokyo to Setoda,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-SetodaTokyoSetodaNormal?id=12255584&type=agent,05/25,,,,,1. Shinkansen Tokyo / Shinagawa → Mihara Station → 2. Local bus / taxi Mihara Station → Mihara Port → 3. Ferry Mihara Port → Setoda Port,
+164,Tokyo,Setoda,High,"1. Private transfer to Tokyo / Shinagawa Station
+ 2. Shinkansen (Green Class) Tokyo → Mihara
+ 3. Private transfer Mihara Station → Mihara Port
+ 4. Ferry Mihara Port → Setoda Port",Transfer Tokyo to Setoda,,YES,https://travel.safariportal.app/Transfer-Tokyo-to-SetodaTokyoSetodaHigh?id=12255690&type=agent,05/25,,,,,1. Private transfer to Tokyo / Shinagawa Station → 2. Shinkansen (Green Class) Tokyo → Mihara → 3. Private transfer Mihara Station → Mihara Port → 4. Ferry Mihara Port → Setoda Port,

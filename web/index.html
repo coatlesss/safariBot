@@ -11,7 +11,7 @@
       <header class="topbar">
         <div>
           <h1>Safari Bot</h1>
-          <p>Paste an itinerary, check the parse, then build a Safari Portal draft.</p>
+          <p>Hotel draft workspace</p>
         </div>
         <div class="status-panel" aria-live="polite">
           <span id="configStatus" class="pill">Config</span>
@@ -22,7 +22,7 @@
       <section class="workspace">
         <div class="pane input-pane">
           <div class="pane-header">
-            <h2>Itinerary Text</h2>
+            <h2>Trip Setup</h2>
             <div class="button-row">
               <button id="sampleButton" type="button">Load Sample</button>
               <button id="clearButton" type="button">Clear</button>
@@ -52,35 +52,46 @@
               <input id="agencyNameInput" type="text" placeholder="Agency name">
             </label>
           </div>
-          <textarea id="itineraryInput" spellcheck="true" placeholder="Paste the itinerary here..."></textarea>
-          <div class="parse-controls">
-            <label class="date-control">
-              <span>Trip starts</span>
-              <input id="startDateInput" type="date">
-            </label>
-            <label class="select-control">
-              <span>Area</span>
-              <select id="areaSelect">
-                <option value="">(Select area)</option>
-              </select>
-              <button id="reloadAreasButton" type="button" class="small">Reload</button>
-            </label>
-            <label class="mode-toggle">
-              <input id="hotelsOnlyToggle" type="checkbox" checked>
-              <span>Hotels only</span>
-            </label>
+
+          <div class="pane-subheader">
+            <h2>Itinerary Text</h2>
           </div>
+          <textarea id="itineraryInput" spellcheck="true" placeholder="Paste the itinerary here..."></textarea>
+
+          <div class="control-band">
+            <div class="parse-controls">
+              <label class="date-control">
+                <span>Trip starts</span>
+                <input id="startDateInput" type="date">
+              </label>
+              <label class="select-control area-control">
+                <span>Area</span>
+                <span class="inline-select">
+                  <select id="areaSelect">
+                    <option value="">Select area</option>
+                  </select>
+                  <button id="reloadAreasButton" type="button" class="small">Reload</button>
+                </span>
+              </label>
+              <label class="mode-toggle">
+                <input id="hotelsOnlyToggle" type="checkbox" checked>
+                <span>Hotels only</span>
+              </label>
+            </div>
+          </div>
+
           <div class="actions">
             <button id="parseButton" class="primary" type="button">Parse Itinerary</button>
             <button id="loginButton" type="button">Open Login</button>
             <button id="buildButton" type="button">Build Draft</button>
+            <button id="closeDraftsButton" type="button">Close Draft Browser</button>
           </div>
           <p id="message" class="message" role="status"></p>
         </div>
 
         <div class="pane output-pane">
           <div class="pane-header">
-            <h2>Parsed Result</h2>
+            <h2>Draft Preview</h2>
             <button id="copyJsonButton" type="button">Copy JSON</button>
           </div>
 

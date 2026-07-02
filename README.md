@@ -59,6 +59,15 @@ Use `Trip starts` to assign dates automatically. For example, if `Trip starts` i
 
 Use the customer fields above the itinerary text for draft metadata: last name, B2C/B2B, and agency name for B2B bookings. These values are included in the parsed JSON and can be mapped to Safari Portal fields later.
 
+## Data Files
+
+Editable CSV data lives in `data/`:
+
+- `data/pages_area.csv` powers the area/RI dropdowns.
+- `data/pages_property.csv` powers automatic hotel/property matching.
+
+Replace those files with fresh Safari Portal exports using the same filenames, then click `Reload` or wait for the app to auto-refresh.
+
 ## Desktop App
 
 To launch Safari Bot as a desktop app:

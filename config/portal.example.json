@@ -27,5 +27,29 @@
       "notes": { "label": "Notes" }
     }
   },
+  "hotelDates": {
+    "firstHotelBox": { "selector": "div.Table_activeMenuWrapper__1mjhZ" },
+    "accommodation": { "role": "button", "name": "Accommodation" },
+    "accommodationInput": { "placeholder": "Accommodation" },
+    "location": { "selector": "div.public-DraftEditor-content[role='textbox']", "commitDelayMs": 2000, "clearBeforeType": true },
+    "hotelName": { "selector": "div.public-DraftEditor-content[role='textbox']", "nth": 1, "commitDelayMs": 2000, "clearBeforeType": true, "arrowDownBeforeEnter": true },
+    "hotelAddButton": { "selector": "button:has(svg path[d^='M18 12.375V23.625']), [role='button']:has(svg path[d^='M18 12.375V23.625'])" },
+    "timelineAddButton": { "selector": "button:has(svg circle):has(svg path[d*='12']), [role='button']:has(svg circle):has(svg path[d*='12'])", "last": true, "waitMs": 700 },
+    "transferSquare": { "selector": "div.Table_childrenWrapper__3MzbK, div[class*='Table_childrenWrapper']", "waitMs": 500 },
+    "transferColumn": { "text": "Transfers, Flights, and Daily Activities", "xOffset": 48, "yRatio": 0.5, "waitMs": 300 },
+    "transferCell": { "selector": "div.Table_cell__209X5, div[class*='Table_cell']", "cellsPerRow": 3, "columnIndex": 1, "x": 40, "y": 40 },
+    "transferBox": { "selector": "div.Table_activeMenuWrapper__1mjhZ, div[class*='Table_activeMenuWrapper']", "x": 60, "y": 40 },
+    "transferMenuIcon": { "selector": "div.TableMenu_icon__11MLB, div[class*='TableMenu_icon']", "x": 12, "y": 24 },
+    "transferBoxFallback": { "selector": "div.Table_childrenWrapper__3MzbK, div[class*='Table_childrenWrapper']", "x": 40, "y": 40 },
+    "transferActivity": { "role": "button", "name": "Activity" },
+    "transferActivityText": "Activity",
+    "transferCalendarTrigger": { "selector": "button.DatePickerButton_datePickerButton__3YqxA" },
+    "transferName": { "selector": "div.public-DraftEditor-content[role='textbox']", "last": true, "commitDelayMs": 2000, "clearBeforeType": true, "arrowDownBeforeEnter": true },
+    "calendarTrigger": { "selector": "button.DatePickerButton_datePickerButton__3YqxA" },
+    "calendarMonth": { "selector": "div.DatePicker_control__1TYJJ:has(input[aria-label='Choose the Month'])" },
+    "calendarYear": { "selector": "div.DatePicker_control__1TYJJ:has(input[aria-label='Choose the Year'])" },
+    "calendarDayCell": { "selector": "table[role='grid'] td[role='gridcell']" },
+    "calendarClose": { "selector": "body" }
+  },
   "submitButton": null
 }

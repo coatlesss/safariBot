@@ -4,7 +4,7 @@ const path = require("path");
 const { parseHotelItinerary, parseItinerary } = require("./parseItinerary");
 const { loadConfig } = require("./config");
 const { login } = require("./session");
-const { buildPortalDraft } = require("./portalBuilder");
+const { buildPortalDraft, closeOpenDraftBrowsers } = require("./portalBuilder");
 
 const DEFAULT_PORT = Number(process.env.PORT || 3131);
 const PUBLIC_DIR = path.resolve(__dirname, "../web");
@@ -36,15 +36,10 @@ function createServer() {
 
     if (req.method === "GET" && url.pathname === "/api/areas") {
       try {
-        // Prefer a local workspace CSV at ./data/pages_area.csv for easy updates.
-        const localPath = path.resolve(process.cwd(), "data", "pages_area.csv");
-        const fallbackPath = path.resolve(process.env.PAGES_CSV || path.resolve(process.env.USERPROFILE || process.env.HOME || ".", "Downloads", "pages_area.csv"));
-        const csvPath = fs.existsSync(localPath) ? localPath : fallbackPath;
+        const csvPath = dataCsvPath("pages_area.csv", process.env.PAGES_CSV);
         if (!fs.existsSync(csvPath)) return sendJson(res, { areas: [] });
         const raw = fs.readFileSync(csvPath, "utf8");
         const rows = parseCsv(raw);
-        // header mapping
-        const header = rows[0] || [];
         const list = [];
         for (let i = 1; i < rows.length; i += 1) {
           const row = rows[i];
@@ -61,6 +56,75 @@ function createServer() {
       }
     }
 
+    if (req.method === "GET" && url.pathname === "/api/properties") {
+      try {
+        const csvPath = dataCsvPath("pages_property.csv", process.env.PROPERTIES_CSV);
+        if (!fs.existsSync(csvPath)) return sendJson(res, { properties: [] });
+        const rows = parseCsv(fs.readFileSync(csvPath, "utf8"));
+        const header = rows[0] || [];
+        const nameIndex = columnIndex(header, "Property Name", 0);
+        const countryIndex = columnIndex(header, "Country", 1);
+        const areaIndex = columnIndex(header, "Area", 2);
+        const locationIndex = columnIndex(header, "Location", 3);
+        const tagsIndex = columnIndex(header, "Tags", 9);
+        const properties = [];
+
+        for (let i = 1; i < rows.length; i += 1) {
+          const row = rows[i];
+          const name = (row[nameIndex] || "").trim();
+          if (!name) continue;
+          properties.push({
+            name,
+            country: (row[countryIndex] || "").trim(),
+            area: (row[areaIndex] || "").trim(),
+            location: (row[locationIndex] || "").trim(),
+            tag: (row[tagsIndex] || "").trim()
+          });
+        }
+
+        return sendJson(res, { properties });
+      } catch (err) {
+        return sendJson(res, { properties: [] });
+      }
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/transfers") {
+      try {
+        const csvPath = dataCsvPath("pages_transfer.csv", process.env.TRANSFERS_CSV);
+        if (!fs.existsSync(csvPath)) return sendJson(res, { transfers: [] });
+        const rows = parseCsv(fs.readFileSync(csvPath, "utf8"));
+        const headerIndex = rows.findIndex((row) => row.some((value) => String(value || "").trim().toLowerCase() === "from area"));
+        if (headerIndex < 0) return sendJson(res, { transfers: [] });
+
+        const header = rows[headerIndex] || [];
+        const fromIndex = columnIndex(header, "From Area", 1);
+        const toIndex = columnIndex(header, "To Area", 2);
+        const segmentIndex = columnIndex(header, "Segment", 3);
+        const nameIndex = columnIndex(header, "Name (RI_AreaStart_AreaEnd_Segment)", 5);
+        const transfers = [];
+
+        for (let i = headerIndex + 1; i < rows.length; i += 1) {
+          const row = rows[i];
+          const fromArea = (row[fromIndex] || "").trim();
+          const toArea = (row[toIndex] || "").trim();
+          const segment = (row[segmentIndex] || "").trim();
+          const name = (row[nameIndex] || "").trim();
+          if (!fromArea || !toArea || !segment || !name) continue;
+          transfers.push({
+            fromArea,
+            toArea,
+            segment,
+            name,
+            tag: `@${compactTagPart(name)}${compactTagPart(fromArea)}${compactTagPart(toArea)}${compactTagPart(segment)}`
+          });
+        }
+
+        return sendJson(res, { transfers });
+      } catch (err) {
+        return sendJson(res, { transfers: [] });
+      }
+    }
+
     if (req.method === "POST" && url.pathname === "/api/login") {
       const config = loadConfig("config/portal.json");
       const storagePath = await login(config, { waitForClose: true });
@@ -72,6 +136,11 @@ function createServer() {
       const itinerary = body.itinerary || parseByMode(bodyText(body), body.mode, parseOptions(body));
       const config = loadConfig("config/portal.json");
       await buildPortalDraft(config, itinerary, { keepOpen: true, submit: Boolean(body.submit) });
+      return sendJson(res, { ok: true });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/close-drafts") {
+      await closeOpenDraftBrowsers();
       return sendJson(res, { ok: true });
     }
 
@@ -121,6 +190,21 @@ function parseOptions(body) {
   };
 }
 
+function dataCsvPath(fileName, overridePath) {
+  const localPath = path.resolve(process.cwd(), "data", fileName);
+  if (fs.existsSync(localPath)) return localPath;
+  return path.resolve(overridePath || path.resolve(process.env.USERPROFILE || process.env.HOME || ".", "Downloads", fileName));
+}
+
+function columnIndex(header, columnName, fallback) {
+  const index = header.findIndex((value) => String(value || "").trim().toLowerCase() === columnName.toLowerCase());
+  return index >= 0 ? index : fallback;
+}
+
+function compactTagPart(value) {
+  return String(value || "").trim().replace(/\s+/g, "");
+}
+
 function parseByMode(text, mode, options = {}) {
   const itinerary = mode === "hotels" ? parseHotelItinerary(text, options) : parseItinerary(text);
   return applyMetadata(itinerary, options.metadata);
@@ -133,6 +217,7 @@ function normalizeMetadata(metadata) {
     lastName: typeof raw.lastName === "string" ? raw.lastName.trim() : "",
     customerType,
     agencyName: customerType === "b2b" && typeof raw.agencyName === "string" ? raw.agencyName.trim() : "",
+    areaName: typeof raw.areaName === "string" ? raw.areaName.trim() : "",
     areaTag: typeof raw.areaTag === "string" ? raw.areaTag.trim() : ""
   };
 }
@@ -143,6 +228,7 @@ function applyMetadata(itinerary, metadata = {}) {
     lastName: metadata.lastName || "",
     customerType: metadata.customerType || "b2c",
     agencyName: metadata.customerType === "b2b" ? metadata.agencyName || "" : "",
+    areaName: metadata.areaName || "",
     areaTag: metadata.areaTag || ""
   };
 }
@@ -207,8 +293,9 @@ function serveStatic(requestPath, res) {
   const normalizedPath = requestPath === "/" ? "/index.html" : requestPath;
   const decodedPath = decodeURIComponent(normalizedPath);
   const filePath = path.resolve(PUBLIC_DIR, `.${decodedPath}`);
+  const relativePath = path.relative(PUBLIC_DIR, filePath);
 
-  if (!filePath.startsWith(PUBLIC_DIR)) {
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
     return sendText(res, "Forbidden", 403);
   }
 
@@ -277,5 +364,6 @@ if (require.main === module) {
 
 module.exports = {
   createServer,
+  closeOpenDraftBrowsers,
   startServer
 };

@@ -1,23 +1,36 @@
 Client: Jane Smith
-Trip: Kenya Family Safari
+Trip: Japan Hotels and Transfers
 Start: 2026-08-12
-End: 2026-08-19
+End: 2026-08-22
 
-Day 1 - Aug 12 - Nairobi
-Accommodation: Hemingways Nairobi
-Transfer: Airport meet and greet, private transfer to hotel
-Activity: Evening at leisure
-Meals: Dinner
-Notes: VIP welcome amenities
+Day 1: Aug 12 | Osaka
+Accommodation: Zentis Osaka
 
-Day 2 - Aug 13 - Amboseli
-Flight: Wilson Airport to Amboseli Airstrip
-Accommodation: Tortilis Camp
-Activity: Afternoon game drive
-Meals: Breakfast, lunch, dinner
+Day 2: Aug 13 | Osaka
+Accommodation: Zentis Osaka
 
-Day 3 - Aug 14 - Amboseli
-Activity: Morning game drive
-Activity: Maasai village visit
-Accommodation: Tortilis Camp
-Meals: Breakfast, lunch, dinner
+Day 3: Aug 14 | Kyoto
+Accommodation: Noku Kyoto
+
+Day 4: Aug 15 | Kyoto
+Accommodation: Noku Kyoto
+
+Day 5: Aug 16 | Hakone
+Accommodation: Hakone Retreat Villa
+
+Day 6: Aug 17 | Hakone
+Accommodation: Hakone Retreat Villa
+
+Day 7: Aug 18 | Tokyo
+Accommodation: The Aoyama Grand
+
+Day 8: Aug 19 | Tokyo
+Accommodation: The Aoyama Grand
+
+Day 9: Aug 20 | Hiroshima
+Accommodation: Rihga Royal Hotel Hiroshima
+
+Day 10: Aug 21 | Hiroshima
+Accommodation: Rihga Royal Hotel Hiroshima
+
+Day 11: Aug 22 | Flight back

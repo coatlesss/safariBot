@@ -58,6 +58,13 @@
               <span>Trip starts</span>
               <input id="startDateInput" type="date">
             </label>
+            <label class="select-control">
+              <span>Area</span>
+              <select id="areaSelect">
+                <option value="">(Select area)</option>
+              </select>
+              <button id="reloadAreasButton" type="button" class="small">Reload</button>
+            </label>
             <label class="mode-toggle">
               <input id="hotelsOnlyToggle" type="checkbox" checked>
               <span>Hotels only</span>
@@ -78,6 +85,7 @@
           </div>
 
           <div id="summary" class="summary-grid"></div>
+          <div id="hotelAreas" class="hotel-areas"></div>
           <div id="days" class="days-list"></div>
         </div>
       </section>

@@ -34,6 +34,33 @@ function createServer() {
       return sendJson(res, { itinerary: parseByMode(bodyText(body), body.mode, parseOptions(body)) });
     }
 
+    if (req.method === "GET" && url.pathname === "/api/areas") {
+      try {
+        // Prefer a local workspace CSV at ./data/pages_area.csv for easy updates.
+        const localPath = path.resolve(process.cwd(), "data", "pages_area.csv");
+        const fallbackPath = path.resolve(process.env.PAGES_CSV || path.resolve(process.env.USERPROFILE || process.env.HOME || ".", "Downloads", "pages_area.csv"));
+        const csvPath = fs.existsSync(localPath) ? localPath : fallbackPath;
+        if (!fs.existsSync(csvPath)) return sendJson(res, { areas: [] });
+        const raw = fs.readFileSync(csvPath, "utf8");
+        const rows = parseCsv(raw);
+        // header mapping
+        const header = rows[0] || [];
+        const list = [];
+        for (let i = 1; i < rows.length; i += 1) {
+          const row = rows[i];
+          if (!row || row.length < 9) continue;
+          const tag = (row[8] || "").trim();
+          if (tag.endsWith("_RI")) {
+            const name = row[0] || row[2] || tag;
+            list.push({ name: name.trim(), tag });
+          }
+        }
+        return sendJson(res, { areas: list });
+      } catch (err) {
+        return sendJson(res, { areas: [] });
+      }
+    }
+
     if (req.method === "POST" && url.pathname === "/api/login") {
       const config = loadConfig("config/portal.json");
       const storagePath = await login(config, { waitForClose: true });
@@ -105,7 +132,8 @@ function normalizeMetadata(metadata) {
   return {
     lastName: typeof raw.lastName === "string" ? raw.lastName.trim() : "",
     customerType,
-    agencyName: customerType === "b2b" && typeof raw.agencyName === "string" ? raw.agencyName.trim() : ""
+    agencyName: customerType === "b2b" && typeof raw.agencyName === "string" ? raw.agencyName.trim() : "",
+    areaTag: typeof raw.areaTag === "string" ? raw.areaTag.trim() : ""
   };
 }
 
@@ -114,8 +142,54 @@ function applyMetadata(itinerary, metadata = {}) {
     ...itinerary,
     lastName: metadata.lastName || "",
     customerType: metadata.customerType || "b2c",
-    agencyName: metadata.customerType === "b2b" ? metadata.agencyName || "" : ""
+    agencyName: metadata.customerType === "b2b" ? metadata.agencyName || "" : "",
+    areaTag: metadata.areaTag || ""
   };
+}
+
+// Simple CSV parser that handles quoted fields and commas inside quotes
+function parseCsv(text) {
+  const rows = [];
+  let cur = [];
+  let curField = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          curField += '"';
+          i += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        curField += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        cur.push(curField);
+        curField = "";
+      } else if (ch === '\n' || ch === '\r') {
+        // handle CRLF or LF
+        if (ch === '\r' && text[i + 1] === '\n') continue;
+        cur.push(curField);
+        rows.push(cur);
+        cur = [];
+        curField = "";
+      } else {
+        curField += ch;
+      }
+    }
+  }
+  // push remaining
+  if (curField !== "" || cur.length) {
+    cur.push(curField);
+    rows.push(cur);
+  }
+  return rows;
 }
 
 function getStatus() {

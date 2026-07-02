@@ -26,6 +26,8 @@ body {
 }
 
 button,
+input,
+select,
 textarea {
   font: inherit;
 }
@@ -92,7 +94,8 @@ h2 {
 
 .status-panel,
 .button-row,
-.actions {
+.actions,
+.client-controls {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -147,6 +150,41 @@ h2 {
   margin-bottom: 12px;
 }
 
+.client-controls {
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.text-control,
+.select-control {
+  display: grid;
+  gap: 5px;
+  min-width: 145px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.text-control span,
+.select-control span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.text-control input,
+.select-control select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
+  padding: 0 10px;
+}
+
+.hidden {
+  display: none !important;
+}
+
 textarea {
   width: 100%;
   min-height: calc(100vh - 278px);
@@ -167,14 +205,30 @@ textarea:focus {
   margin-top: 12px;
 }
 
-.mode-toggle {
+.parse-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.mode-toggle,
+.date-control {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-height: 36px;
-  margin-top: 10px;
   color: var(--text);
   font-size: 14px;
+}
+
+.date-control input {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
+  color: var(--text);
 }
 
 .mode-toggle input {

@@ -56,3 +56,46 @@ Serengeti Safari Camp
   assert.equal(result.days[2].accommodation, "Serengeti Safari Camp");
   assert.deepEqual(result.days[0].activities, []);
 });
+
+test("parses tabular day and location rows as hotel placeholders", () => {
+  const result = parseHotelItinerary(`
+Day 1-5	Heda-Ito	Own arrangement
+6	Kyoto	Evening shinkansen Atami-Kyoto
+7	Kyoto	Guided tour Kyoto
+8	Kyoto	Free day
+9	Okayama	Morning free time Kyoto; evening go to Okayama
+10	Naoshima	Visit Naoshima
+11	Okayama	Visit Naoshima
+12	Tokyo	Morning visit Okayama - evening train to Tokyo
+13	Tokyo	Guided tour old Tokyo
+14	Tokyo	Sumo experience/practice & free day
+15	Tokyo	Free day
+16	Flight back
+`);
+
+  assert.equal(result.days.length, 15);
+  assert.equal(result.days[0].number, 1);
+  assert.equal(result.days[0].location, "Heda-Ito");
+  assert.equal(result.days[0].accommodation, "Hotel TBD - Heda-Ito");
+  assert.equal(result.days[4].number, 5);
+  assert.equal(result.days[5].number, 6);
+  assert.equal(result.days[5].accommodation, "Hotel TBD - Kyoto");
+  assert.equal(result.days[14].number, 15);
+  assert.equal(result.days[14].accommodation, "Hotel TBD - Tokyo");
+});
+
+test("assigns hotel dates from a selected start date", () => {
+  const result = parseHotelItinerary(`
+Day 1-2	Heda-Ito	Own arrangement
+3	Kyoto	Evening shinkansen Atami-Kyoto
+4	Flight back
+`, { startDate: "2026-04-10" });
+
+  assert.equal(result.startDate, "2026-04-10");
+  assert.equal(result.endDate, "2026-04-12");
+  assert.equal(result.days.length, 3);
+  assert.equal(result.days[0].date, "2026-04-10");
+  assert.equal(result.days[1].date, "2026-04-11");
+  assert.equal(result.days[2].date, "2026-04-12");
+  assert.equal(result.days[2].accommodation, "Hotel TBD - Kyoto");
+});

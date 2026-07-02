@@ -6,6 +6,9 @@
   "fields": {
     "tripTitle": { "label": "Trip Name" },
     "clientName": { "label": "Client Name" },
+    "lastName": { "label": "Last Name" },
+    "customerType": { "label": "Client Type" },
+    "agencyName": { "label": "Agency" },
     "startDate": { "label": "Start Date" },
     "endDate": { "label": "End Date" },
     "summaryNotes": { "label": "Notes" }

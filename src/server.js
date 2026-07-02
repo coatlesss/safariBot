@@ -31,7 +31,7 @@ function createServer() {
 
     if (req.method === "POST" && url.pathname === "/api/parse") {
       const body = await readJson(req);
-      return sendJson(res, { itinerary: parseByMode(bodyText(body), body.mode) });
+      return sendJson(res, { itinerary: parseByMode(bodyText(body), body.mode, parseOptions(body)) });
     }
 
     if (req.method === "POST" && url.pathname === "/api/login") {
@@ -42,9 +42,9 @@ function createServer() {
 
     if (req.method === "POST" && url.pathname === "/api/build") {
       const body = await readJson(req);
-      const itinerary = body.itinerary || parseByMode(bodyText(body), body.mode);
+      const itinerary = body.itinerary || parseByMode(bodyText(body), body.mode, parseOptions(body));
       const config = loadConfig("config/portal.json");
-      await buildPortalDraft(config, itinerary, { submit: Boolean(body.submit) });
+      await buildPortalDraft(config, itinerary, { keepOpen: true, submit: Boolean(body.submit) });
       return sendJson(res, { ok: true });
     }
 
@@ -87,9 +87,35 @@ function bodyText(body) {
   return JSON.stringify(body.text, null, 2);
 }
 
-function parseByMode(text, mode) {
-  if (mode === "hotels") return parseHotelItinerary(text);
-  return parseItinerary(text);
+function parseOptions(body) {
+  return {
+    startDate: typeof body.startDate === "string" ? body.startDate : "",
+    metadata: normalizeMetadata(body.metadata)
+  };
+}
+
+function parseByMode(text, mode, options = {}) {
+  const itinerary = mode === "hotels" ? parseHotelItinerary(text, options) : parseItinerary(text);
+  return applyMetadata(itinerary, options.metadata);
+}
+
+function normalizeMetadata(metadata) {
+  const raw = metadata && typeof metadata === "object" ? metadata : {};
+  const customerType = raw.customerType === "b2b" ? "b2b" : "b2c";
+  return {
+    lastName: typeof raw.lastName === "string" ? raw.lastName.trim() : "",
+    customerType,
+    agencyName: customerType === "b2b" && typeof raw.agencyName === "string" ? raw.agencyName.trim() : ""
+  };
+}
+
+function applyMetadata(itinerary, metadata = {}) {
+  return {
+    ...itinerary,
+    lastName: metadata.lastName || "",
+    customerType: metadata.customerType || "b2c",
+    agencyName: metadata.customerType === "b2b" ? metadata.agencyName || "" : ""
+  };
 }
 
 function getStatus() {

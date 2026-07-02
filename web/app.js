@@ -11,6 +11,13 @@ const buildButton = document.querySelector("#buildButton");
 const configStatus = document.querySelector("#configStatus");
 const sessionStatus = document.querySelector("#sessionStatus");
 const hotelsOnlyToggle = document.querySelector("#hotelsOnlyToggle");
+const startDateInput = document.querySelector("#startDateInput");
+const lastNameInput = document.querySelector("#lastNameInput");
+const clientTypeSelect = document.querySelector("#clientTypeSelect");
+const agencySelect = document.querySelector("#agencySelect");
+const agencySelectWrap = document.querySelector("#agencySelectWrap");
+const agencyCustomWrap = document.querySelector("#agencyCustomWrap");
+const agencyNameInput = document.querySelector("#agencyNameInput");
 
 let parsedItinerary = null;
 
@@ -25,8 +32,11 @@ clearButton.addEventListener("click", () => {
 copyJsonButton.addEventListener("click", copyJson);
 loginButton.addEventListener("click", login);
 buildButton.addEventListener("click", buildDraft);
+clientTypeSelect.addEventListener("change", updateAgencyControls);
+agencySelect.addEventListener("change", updateAgencyControls);
 
 refreshStatus();
+updateAgencyControls();
 renderItinerary(null);
 
 async function loadSample() {
@@ -45,7 +55,7 @@ async function loadSample() {
 async function parseCurrentText() {
   setBusy(true);
   try {
-    const data = await request("/api/parse", { text: input.value, mode: currentMode() });
+    const data = await request("/api/parse", parseRequestBody());
     parsedItinerary = data.itinerary;
     renderItinerary(parsedItinerary);
     const dayCount = parsedItinerary.days.length;
@@ -76,12 +86,14 @@ async function buildDraft() {
     await parseCurrentText();
   }
   if (!parsedItinerary) return;
+  parsedItinerary = withCurrentMetadata(parsedItinerary);
+  renderItinerary(parsedItinerary);
 
   setBusy(true);
   setMessage("Opening Safari Portal draft builder. Review the browser when it appears.");
   try {
-    await request("/api/build", { itinerary: parsedItinerary, mode: currentMode(), submit: false });
-    setMessage("Draft builder finished.");
+    await request("/api/build", { itinerary: parsedItinerary, mode: currentMode(), startDate: currentStartDate(), submit: false });
+    setMessage("Draft builder opened. Review and save in Safari Portal.");
   } catch (error) {
     setMessage(error.message, true);
   } finally {
@@ -95,6 +107,8 @@ async function copyJson() {
     return;
   }
 
+  parsedItinerary = withCurrentMetadata(parsedItinerary);
+  renderItinerary(parsedItinerary);
   await navigator.clipboard.writeText(JSON.stringify(parsedItinerary, null, 2));
   setMessage("Parsed JSON copied.");
 }
@@ -120,6 +134,9 @@ function renderItinerary(itinerary) {
   }
 
   summary.innerHTML = [
+    summaryItem("Last Name", itinerary.lastName),
+    summaryItem("Type", itinerary.customerType ? itinerary.customerType.toUpperCase() : ""),
+    summaryItem("Agency", itinerary.agencyName),
     summaryItem("Client", itinerary.clientName),
     summaryItem("Trip", itinerary.tripTitle),
     summaryItem("Start", itinerary.startDate),
@@ -205,6 +222,45 @@ function setMessage(text, isError = false) {
 
 function currentMode() {
   return hotelsOnlyToggle.checked ? "hotels" : "full";
+}
+
+function currentStartDate() {
+  return startDateInput.value || "";
+}
+
+function currentAgencyName() {
+  if (clientTypeSelect.value !== "b2b") return "";
+  return agencySelect.value === "custom" ? agencyNameInput.value.trim() : agencySelect.value;
+}
+
+function currentMetadata() {
+  return {
+    lastName: lastNameInput.value.trim(),
+    customerType: clientTypeSelect.value,
+    agencyName: currentAgencyName()
+  };
+}
+
+function withCurrentMetadata(itinerary) {
+  return {
+    ...itinerary,
+    ...currentMetadata()
+  };
+}
+
+function parseRequestBody() {
+  return {
+    text: input.value,
+    mode: currentMode(),
+    startDate: currentStartDate(),
+    metadata: currentMetadata()
+  };
+}
+
+function updateAgencyControls() {
+  const isB2b = clientTypeSelect.value === "b2b";
+  agencySelectWrap.classList.toggle("hidden", !isB2b);
+  agencyCustomWrap.classList.toggle("hidden", !isB2b || agencySelect.value !== "custom");
 }
 
 function escapeHtml(value) {

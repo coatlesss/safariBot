@@ -53,6 +53,12 @@ Serengeti Safari Camp
 
 The login button opens a browser. Log in normally, then close that browser window; Safari Bot saves the session when the login window closes.
 
+Use `Trip starts` to assign dates automatically. For example, if `Trip starts` is `2026-04-10`, then `Day 1` is `2026-04-10`, `Day 2` is `2026-04-11`, and a row like `Day 1-5 Heda-Ito` expands into five placeholder hotel nights.
+
+`Build Draft` opens Safari Portal with your saved login session and tries to fill the fields listed in `config/portal.json`. Keep this as a supervised step until the real Safari Portal hotel fields and buttons are mapped.
+
+Use the customer fields above the itinerary text for draft metadata: last name, B2C/B2B, and agency name for B2B bookings. These values are included in the parsed JSON and can be mapped to Safari Portal fields later.
+
 ## Desktop App
 
 To launch Safari Bot as a desktop app:

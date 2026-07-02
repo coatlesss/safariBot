@@ -28,11 +28,41 @@
               <button id="clearButton" type="button">Clear</button>
             </div>
           </div>
+          <div class="client-controls">
+            <label class="text-control">
+              <span>Last name</span>
+              <input id="lastNameInput" type="text" autocomplete="family-name" placeholder="Smith">
+            </label>
+            <label class="select-control">
+              <span>Client type</span>
+              <select id="clientTypeSelect">
+                <option value="b2c">B2C</option>
+                <option value="b2b">B2B</option>
+              </select>
+            </label>
+            <label id="agencySelectWrap" class="select-control hidden">
+              <span>Agency</span>
+              <select id="agencySelect">
+                <option value="">Select agency</option>
+                <option value="custom">Add agency name...</option>
+              </select>
+            </label>
+            <label id="agencyCustomWrap" class="text-control hidden">
+              <span>Agency name</span>
+              <input id="agencyNameInput" type="text" placeholder="Agency name">
+            </label>
+          </div>
           <textarea id="itineraryInput" spellcheck="true" placeholder="Paste the itinerary here..."></textarea>
-          <label class="mode-toggle">
-            <input id="hotelsOnlyToggle" type="checkbox" checked>
-            <span>Hotels only</span>
-          </label>
+          <div class="parse-controls">
+            <label class="date-control">
+              <span>Trip starts</span>
+              <input id="startDateInput" type="date">
+            </label>
+            <label class="mode-toggle">
+              <input id="hotelsOnlyToggle" type="checkbox" checked>
+              <span>Hotels only</span>
+            </label>
+          </div>
           <div class="actions">
             <button id="parseButton" class="primary" type="button">Parse Itinerary</button>
             <button id="loginButton" type="button">Open Login</button>

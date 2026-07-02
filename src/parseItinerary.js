@@ -170,8 +170,18 @@ function parseItinerary(text) {
   return result;
 }
 
-function parseHotelItinerary(text) {
+function parseHotelItinerary(text, options = {}) {
   const itinerary = parseItinerary(text);
+  const selectedStartDate = normalizeSelectedStartDate(options.startDate);
+
+  const tableDays = parseHotelTable(text, itinerary);
+  if (tableDays.length) {
+    itinerary.summaryNotes = [];
+    itinerary.days = assignDates(tableDays, selectedStartDate || itinerary.startDate);
+    itinerary.startDate = selectedStartDate || itinerary.startDate || itinerary.days[0]?.date || "";
+    itinerary.endDate = itinerary.days[itinerary.days.length - 1]?.date || itinerary.endDate || "";
+    return itinerary;
+  }
 
   itinerary.summaryNotes = [];
   itinerary.days = itinerary.days
@@ -189,8 +199,9 @@ function parseHotelItinerary(text) {
     }));
 
   if (itinerary.days.length) {
-    itinerary.startDate = itinerary.startDate || itinerary.days[0].date || "";
-    itinerary.endDate = itinerary.endDate || itinerary.days[itinerary.days.length - 1].date || "";
+    itinerary.days = assignDates(itinerary.days, selectedStartDate || itinerary.startDate);
+    itinerary.startDate = selectedStartDate || itinerary.startDate || itinerary.days[0].date || "";
+    itinerary.endDate = itinerary.days[itinerary.days.length - 1].date || itinerary.endDate || "";
     return itinerary;
   }
 
@@ -209,7 +220,90 @@ function parseHotelItinerary(text) {
     });
   }
 
+  itinerary.days = assignDates(itinerary.days, selectedStartDate || itinerary.startDate);
+  itinerary.startDate = selectedStartDate || itinerary.startDate || itinerary.days[0]?.date || "";
+  itinerary.endDate = itinerary.days[itinerary.days.length - 1]?.date || itinerary.endDate || "";
+
   return itinerary;
+}
+
+function parseHotelTable(text, baseItinerary) {
+  const days = [];
+  const lines = text.replace(/\r\n/g, "\n").split("\n").map((line) => line.trim()).filter(Boolean);
+
+  for (const line of lines) {
+    if (/^(client|traveler|traveller|guest|trip|title|start|start date|end|end date)\s*:/i.test(line)) {
+      continue;
+    }
+
+    const row = parseTableRow(line);
+    if (!row) continue;
+
+    for (const number of row.dayNumbers) {
+      days.push({
+        ...emptyDay(number),
+        location: row.location,
+        accommodation: placeholderHotel(row.location)
+      });
+    }
+  }
+
+  if (days.length && !baseItinerary.endDate) {
+    baseItinerary.endDate = days[days.length - 1].date || "";
+  }
+
+  return days;
+}
+
+function parseTableRow(line) {
+  const match = line.match(/^(?:day\s*)?(\d+)(?:\s*[-–]\s*(\d+))?\s+(.+)$/i);
+  if (!match) return null;
+
+  const start = Number(match[1]);
+  const end = match[2] ? Number(match[2]) : start;
+  if (!Number.isInteger(start) || !Number.isInteger(end) || end < start) return null;
+
+  const cells = match[3].split(/\t+|\s{2,}/).map((cell) => cell.trim()).filter(Boolean);
+  const location = cells[0] || "";
+  if (!location || isNonHotelLocation(location)) return null;
+
+  return {
+    dayNumbers: Array.from({ length: end - start + 1 }, (_, index) => start + index),
+    location
+  };
+}
+
+function isNonHotelLocation(value) {
+  return /^(flight|flight back|fly home|return flight|departure|depart|home)$/i.test(value.trim());
+}
+
+function placeholderHotel(location) {
+  return `Hotel TBD - ${location}`;
+}
+
+function normalizeSelectedStartDate(value) {
+  if (!value) return "";
+  const normalized = normalizeDate(String(value), "");
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : "";
+}
+
+function assignDates(days, startDate) {
+  if (!startDate || !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return days;
+
+  return days.map((day) => ({
+    ...day,
+    date: day.date || addDays(startDate, Math.max(0, (day.number || 1) - 1))
+  }));
+}
+
+function addDays(startDate, offset) {
+  const [year, month, day] = startDate.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + offset));
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0")
+  ].join("-");
 }
 
 module.exports = {

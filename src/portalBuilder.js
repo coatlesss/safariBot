@@ -73,6 +73,9 @@ async function buildPortalDraft(config, itinerary, options = {}) {
   const fields = config.fields || {};
   await fillSpec(page, fields.tripTitle, itinerary.tripTitle, "trip title");
   await fillSpec(page, fields.clientName, itinerary.clientName, "client name");
+  await fillSpec(page, fields.lastName, itinerary.lastName, "last name");
+  await fillSpec(page, fields.customerType, itinerary.customerType, "client type");
+  await fillSpec(page, fields.agencyName, itinerary.agencyName, "agency name");
   await fillSpec(page, fields.startDate, itinerary.startDate, "start date");
   await fillSpec(page, fields.endDate, itinerary.endDate, "end date");
   await fillSpec(page, fields.summaryNotes, itinerary.summaryNotes, "summary notes");
@@ -101,7 +104,10 @@ async function buildPortalDraft(config, itinerary, options = {}) {
     return;
   }
 
-  await page.pause();
+  if (options.keepOpen) {
+    return;
+  }
+
   await browser.close();
 }
 

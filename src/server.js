@@ -25,6 +25,10 @@ function createServer() {
       return sendJson(res, { text: fs.readFileSync(path.resolve("examples/sample-itinerary.txt"), "utf8") });
     }
 
+    if (req.method === "GET" && url.pathname === "/api/template") {
+      return sendJson(res, { text: fs.readFileSync(path.resolve("examples/template.txt"), "utf8") });
+    }
+
     if (req.method === "GET" && url.pathname === "/api/status") {
       return sendJson(res, getStatus());
     }

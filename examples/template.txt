@@ -1,0 +1,11 @@
+Client: Client Name
+Trip: Trip Title
+Start: 08/12/2026
+
+Day 1-2: 08/12 | Location Name
+Accommodation: Hotel Name
+
+Day 3-4: 08/14 | Location Name
+Accommodation: Hotel Name
+
+Day 5: 08/16 | Flight back

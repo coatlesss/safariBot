@@ -61,6 +61,10 @@ function expandYear(value) {
   return value;
 }
 
+function looksLikeDate(text, fallbackYear) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalizeDate(text, fallbackYear));
+}
+
 function pushValue(target, field, value) {
   const trimmed = value.trim();
   if (!trimmed) return;
@@ -85,19 +89,46 @@ function emptyDay(number = null) {
   };
 }
 
+// Parses a "Day N" or "Day N-M" heading into one day object per covered day,
+// so a single Accommodation/Location line below can apply to a whole multi-night
+// stay instead of the employee repeating a day block per night.
 function parseHeading(line, fallbackYear) {
-  const match = line.match(/^day\s+(\d+)\s*(?:[-:|]\s*)?(.*)$/i);
+  const match = line.match(/^day\s+(\d+)(?:\s*[-–]\s*(\d+))?\s*(?:[-:|]\s*)?(.*)$/i);
   if (!match) return null;
 
-  const day = emptyDay(Number(match[1]));
-  const rest = match[2].trim();
-  if (!rest) return day;
+  const startNumber = Number(match[1]);
+  const endNumber = match[2] ? Number(match[2]) : startNumber;
+  const rest = match[3].trim();
 
-  const pieces = rest.split(/\s+-\s+|\s+\|\s+/).map((piece) => piece.trim()).filter(Boolean);
-  if (pieces[0]) day.date = normalizeDate(pieces[0], fallbackYear);
-  if (pieces.length > 1) day.location = pieces.slice(1).join(" - ");
+  let date = "";
+  let location = "";
+  if (rest) {
+    const pieces = rest.split(/\s+-\s+|\s+\|\s+/).map((piece) => piece.trim()).filter(Boolean);
+    if (pieces.length > 1) {
+      if (pieces[0]) date = normalizeDate(pieces[0], fallbackYear);
+      location = pieces.slice(1).join(" - ");
+    } else if (pieces[0]) {
+      // A single piece could be either a date ("Day 1: Aug 12") or just a
+      // location ("Day 1-2: Osaka") - only treat it as a date if it actually
+      // resolves to one, so a location-only heading isn't mangled into a
+      // garbage date with an empty location.
+      if (looksLikeDate(pieces[0], fallbackYear)) {
+        date = normalizeDate(pieces[0], fallbackYear);
+      } else {
+        location = pieces[0];
+      }
+    }
+  }
 
-  return day;
+  const days = [];
+  for (let number = startNumber; number <= endNumber; number += 1) {
+    const day = emptyDay(number);
+    day.location = location;
+    if (date) day.date = number === startNumber ? date : addDays(date, number - startNumber);
+    days.push(day);
+  }
+
+  return days;
 }
 
 function parseItinerary(text) {
@@ -110,7 +141,7 @@ function parseItinerary(text) {
     days: []
   };
 
-  let currentDay = null;
+  let currentDayGroup = null;
   let fallbackYear = "";
   const lines = text.replace(/\r\n/g, "\n").split("\n");
 
@@ -119,7 +150,7 @@ function parseItinerary(text) {
     if (!line) continue;
 
     const topLevel = line.match(/^(client|traveler|traveller|guest|trip|title|start|start date|end|end date)\s*:\s*(.+)$/i);
-    if (topLevel && !currentDay) {
+    if (topLevel && !currentDayGroup) {
       const key = topLevel[1].toLowerCase();
       const value = topLevel[2].trim();
       if (["client", "traveler", "traveller", "guest"].includes(key)) result.clientName = value;
@@ -134,31 +165,33 @@ function parseItinerary(text) {
 
     const heading = parseHeading(line, fallbackYear);
     if (heading) {
-      currentDay = heading;
-      result.days.push(currentDay);
+      currentDayGroup = heading;
+      result.days.push(...currentDayGroup);
       continue;
     }
 
     const field = line.match(/^(accommodation|hotel|lodge|camp|activity|activities|transfer|transfers|flight|flights|meal|meals|note|notes)\s*:\s*(.+)$/i);
     if (field) {
-      if (!currentDay) {
+      if (!currentDayGroup) {
         pushValue(result, "summaryNotes", line);
         continue;
       }
 
       const label = field[1].toLowerCase();
       const value = field[2];
-      if (["accommodation", "hotel", "lodge", "camp"].includes(label)) pushValue(currentDay, "accommodation", value);
-      if (["activity", "activities"].includes(label)) pushValue(currentDay, "activities", value);
-      if (["transfer", "transfers"].includes(label)) pushValue(currentDay, "transfers", value);
-      if (["flight", "flights"].includes(label)) pushValue(currentDay, "flights", value);
-      if (["meal", "meals"].includes(label)) pushValue(currentDay, "meals", value);
-      if (["note", "notes"].includes(label)) pushValue(currentDay, "notes", value);
+      for (const currentDay of currentDayGroup) {
+        if (["accommodation", "hotel", "lodge", "camp"].includes(label)) pushValue(currentDay, "accommodation", value);
+        if (["activity", "activities"].includes(label)) pushValue(currentDay, "activities", value);
+        if (["transfer", "transfers"].includes(label)) pushValue(currentDay, "transfers", value);
+        if (["flight", "flights"].includes(label)) pushValue(currentDay, "flights", value);
+        if (["meal", "meals"].includes(label)) pushValue(currentDay, "meals", value);
+        if (["note", "notes"].includes(label)) pushValue(currentDay, "notes", value);
+      }
       continue;
     }
 
-    if (currentDay) {
-      currentDay.notes.push(line);
+    if (currentDayGroup) {
+      for (const currentDay of currentDayGroup) currentDay.notes.push(line);
     } else {
       result.summaryNotes.push(line);
     }

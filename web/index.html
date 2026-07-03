@@ -24,6 +24,7 @@
           <div class="pane-header">
             <h2>Trip Setup</h2>
             <div class="button-row">
+              <button id="templateButton" type="button">Load Template</button>
               <button id="sampleButton" type="button">Load Sample</button>
               <button id="clearButton" type="button">Clear</button>
             </div>
@@ -55,27 +56,50 @@
 
           <div class="pane-subheader">
             <h2>Itinerary Text</h2>
+            <div class="tab-strip" role="tablist">
+              <button id="tabPasteButton" type="button" class="tab-button active" role="tab" aria-selected="true">Paste Text</button>
+              <button id="tabBuilderButton" type="button" class="tab-button" role="tab" aria-selected="false">Build Itinerary</button>
+            </div>
           </div>
-          <textarea id="itineraryInput" spellcheck="true" placeholder="Paste the itinerary here..."></textarea>
+
+          <div id="pasteTab">
+            <textarea id="itineraryInput" spellcheck="true" placeholder="Paste the itinerary here...&#10;&#10;Tip: for a multi-night stay, write one heading for the whole range instead of a day block per night:&#10;Day 1-2: Aug 12 | Osaka&#10;Accommodation: Zentis Osaka"></textarea>
+          </div>
+
+          <div id="builderTab" class="hidden">
+            <div class="client-controls">
+              <label class="text-control">
+                <span>Client name</span>
+                <input id="builderClientNameInput" type="text" placeholder="Jane Smith">
+              </label>
+              <label class="text-control">
+                <span>Trip title</span>
+                <input id="builderTripTitleInput" type="text" placeholder="Japan Hotels and Transfers">
+              </label>
+            </div>
+
+            <div id="stayRows" class="stay-rows"></div>
+
+            <div class="button-row">
+              <button id="addStayButton" type="button" class="small">+ Add Stay</button>
+            </div>
+
+            <label class="return-flight-row">
+              <input id="returnFlightToggle" type="checkbox" checked>
+              <span>Trip ends with a return flight</span>
+              <input id="returnFlightLabelInput" type="text" value="Flight back">
+            </label>
+
+            <div class="button-row">
+              <button id="generateItineraryButton" class="primary" type="button">Generate Itinerary</button>
+            </div>
+          </div>
 
           <div class="control-band">
             <div class="parse-controls">
               <label class="date-control">
                 <span>Trip starts</span>
                 <input id="startDateInput" type="date">
-              </label>
-              <label class="select-control area-control">
-                <span>Area</span>
-                <span class="inline-select">
-                  <select id="areaSelect">
-                    <option value="">Select area</option>
-                  </select>
-                  <button id="reloadAreasButton" type="button" class="small">Reload</button>
-                </span>
-              </label>
-              <label class="mode-toggle">
-                <input id="hotelsOnlyToggle" type="checkbox" checked>
-                <span>Hotels only</span>
               </label>
             </div>
           </div>

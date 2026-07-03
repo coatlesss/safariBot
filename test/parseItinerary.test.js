@@ -58,6 +58,54 @@ Serengeti Safari Camp
   assert.deepEqual(result.days[0].activities, []);
 });
 
+test("applies one Accommodation line to every day in a 'Day N-M' range heading", () => {
+  const result = parseItinerary(`
+Client: Jane Smith
+Trip: Japan Hotels and Transfers
+Start: 2026-08-12
+
+Day 1-2: Aug 12 | Osaka
+Accommodation: Zentis Osaka
+
+Day 3: Aug 14 | Kyoto
+Accommodation: Noku Kyoto
+`);
+
+  assert.equal(result.days.length, 3);
+  assert.equal(result.days[0].number, 1);
+  assert.equal(result.days[0].date, "2026-08-12");
+  assert.equal(result.days[0].location, "Osaka");
+  assert.equal(result.days[0].accommodation, "Zentis Osaka");
+  assert.equal(result.days[1].number, 2);
+  assert.equal(result.days[1].date, "2026-08-13");
+  assert.equal(result.days[1].location, "Osaka");
+  assert.equal(result.days[1].accommodation, "Zentis Osaka");
+  assert.equal(result.days[2].number, 3);
+  assert.equal(result.days[2].date, "2026-08-14");
+  assert.equal(result.days[2].accommodation, "Noku Kyoto");
+});
+
+test("treats a single-piece heading as a location, not a garbled date, when it isn't date-shaped", () => {
+  const result = parseItinerary(`
+Start: 2026-08-12
+
+Day 1-2: Osaka
+Accommodation: Zentis Osaka
+
+Day 3: Aug 14
+Accommodation: Noku Kyoto
+`);
+
+  assert.equal(result.days.length, 3);
+  assert.equal(result.days[0].location, "Osaka");
+  assert.equal(result.days[0].date, "");
+  assert.equal(result.days[0].accommodation, "Zentis Osaka");
+  assert.equal(result.days[1].location, "Osaka");
+  assert.equal(result.days[2].location, "");
+  assert.equal(result.days[2].date, "2026-08-14");
+  assert.equal(result.days[2].accommodation, "Noku Kyoto");
+});
+
 test("parses tabular day and location rows as hotel placeholders", () => {
   const result = parseHotelItinerary(`
 Day 1-5	Heda-Ito	Own arrangement

@@ -488,7 +488,7 @@ function currentAgencyName() {
 }
 
 function currentMetadata() {
-  const globalArea = areaFromTag("");
+  const globalArea = areaByName("");
   return {
     lastName: lastNameInput.value.trim(),
     customerType: clientTypeSelect.value,
@@ -548,25 +548,20 @@ function renderHotelAreaControls(itinerary) {
     return;
   }
 
-  const areaOptions = (areasCache || []).map(a => `<option value="${escapeHtml(a.tag)}">${escapeHtml(a.name)}</option>`).join('');
-  const propertyOptions = (propertiesCache || []).map((property) => (
-    `<option value="${escapeHtml(property.name)}">${escapeHtml(property.name)}</option>`
-  )).join("");
-
   hotelAreasContainer.innerHTML = `
     <div class="hotel-areas-header"><strong>Hotel Setup</strong></div>
     ${stays.map((stay) => `
       <label class="hotel-area-row">
         <span>${escapeHtml(stay.label)}</span>
         <span class="hotel-select-group">
-          <select class="hotel-property-select" data-stay-key="${escapeHtml(stay.key)}">
-            <option value="">Match property</option>
-            ${propertyOptions}
-          </select>
-          <select class="hotel-area-select" data-stay-key="${escapeHtml(stay.key)}">
-            <option value="">Inherit area</option>
-            ${areaOptions}
-          </select>
+          <div class="autocomplete">
+            <input type="text" class="hotel-property-input" data-stay-key="${escapeHtml(stay.key)}" placeholder="Match property" autocomplete="off">
+            <div class="autocomplete-list hidden"></div>
+          </div>
+          <div class="autocomplete">
+            <input type="text" class="hotel-area-input" data-stay-key="${escapeHtml(stay.key)}" placeholder="Inherit area" autocomplete="off">
+            <div class="autocomplete-list hidden"></div>
+          </div>
         </span>
       </label>
     `).join('')}
@@ -614,34 +609,57 @@ function renderTransferControls(stays, perDayAreas) {
 
 function bindHotelAreaControls(itinerary) {
   if (!hotelAreasContainer) return;
-  const selects = hotelAreasContainer.querySelectorAll('.hotel-area-select');
-  selects.forEach(select => {
-    const stayKey = select.getAttribute('data-stay-key') || "";
-    if (hotelAreaMap[stayKey]) select.value = hotelAreaMap[stayKey];
-    select.addEventListener('change', () => {
-      const val = select.value || '';
-      if (val) hotelAreaMap[stayKey] = val; else delete hotelAreaMap[stayKey];
+
+  const areaInputs = hotelAreasContainer.querySelectorAll(".hotel-area-input");
+  areaInputs.forEach((inputEl) => {
+    const stayKey = inputEl.getAttribute("data-stay-key") || "";
+    const currentName = hotelAreaMap[stayKey] || "";
+    inputEl.value = currentName;
+
+    function applyAreaValue(value) {
+      const trimmed = value.trim();
+      const matched = areasCache.find((a) => a.name.toLowerCase() === trimmed.toLowerCase());
+      if (matched) {
+        hotelAreaMap[stayKey] = matched.name;
+        inputEl.value = matched.name;
+      } else {
+        delete hotelAreaMap[stayKey];
+      }
       parsedItinerary = withCurrentMetadata(itinerary);
       renderItinerary(parsedItinerary);
-    });
-  });
-
-  const propertySelects = hotelAreasContainer.querySelectorAll(".hotel-property-select");
-  propertySelects.forEach((select) => {
-    const stayKey = select.getAttribute("data-stay-key") || "";
-    const stay = getHotelStays(itinerary).find((candidate) => candidate.key === stayKey);
-    const matched = hotelPropertyMap[stayKey] || autoMatchPropertyName(stay?.accommodation || "");
-    if (matched) {
-      select.value = matched;
-      hotelPropertyMap[stayKey] = matched;
     }
 
-    select.addEventListener("change", () => {
-      const val = select.value || "";
-      if (val) hotelPropertyMap[stayKey] = val; else delete hotelPropertyMap[stayKey];
+    inputEl.addEventListener("change", (e) => applyAreaValue(e.target.value));
+    attachAutocomplete(
+      inputEl,
+      inputEl.closest(".autocomplete").querySelector(".autocomplete-list"),
+      () => areasCache.map((a) => a.name),
+      applyAreaValue
+    );
+  });
+
+  const propertyInputs = hotelAreasContainer.querySelectorAll(".hotel-property-input");
+  propertyInputs.forEach((inputEl) => {
+    const stayKey = inputEl.getAttribute("data-stay-key") || "";
+    const stay = getHotelStays(itinerary).find((candidate) => candidate.key === stayKey);
+    const matched = hotelPropertyMap[stayKey] || autoMatchPropertyName(stay?.accommodation || "");
+    if (matched) hotelPropertyMap[stayKey] = matched;
+    inputEl.value = matched || "";
+
+    function applyPropertyValue(value) {
+      const trimmed = value.trim();
+      if (trimmed) hotelPropertyMap[stayKey] = trimmed; else delete hotelPropertyMap[stayKey];
       parsedItinerary = withCurrentMetadata(itinerary);
       renderItinerary(parsedItinerary);
-    });
+    }
+
+    inputEl.addEventListener("change", (e) => applyPropertyValue(e.target.value));
+    attachAutocomplete(
+      inputEl,
+      inputEl.closest(".autocomplete").querySelector(".autocomplete-list"),
+      () => propertiesCache.map((p) => p.name),
+      applyPropertyValue
+    );
   });
 
   const transferSelects = hotelAreasContainer.querySelectorAll(".transfer-segment-select");
@@ -663,14 +681,14 @@ function bindHotelAreaControls(itinerary) {
 // this stay with an unrelated area).
 function computePerDayAreas(itinerary) {
   const areas = new Array((itinerary.days || []).length).fill(null);
-  let last = areaFromTag("");
+  let last = { name: "", tag: "" };
   const stays = getHotelStays(itinerary);
 
   for (const stay of stays) {
     const selected = hotelAreaMap[stay.key] || "";
     let area;
     if (selected) {
-      area = areaFromTag(selected);
+      area = areaByName(selected);
     } else {
       area = resolveStayArea(stay) || (stay.location ? { name: "", tag: "" } : last);
     }
@@ -699,14 +717,11 @@ function resolveStayArea(stay) {
   return null;
 }
 
-function areaFromTag(tag) {
-  const normalizedTag = String(tag || "").trim();
-  if (!normalizedTag) return { name: "", tag: "" };
-  const area = areasCache.find((candidate) => candidate.tag === normalizedTag);
-  return {
-    name: area?.name || "",
-    tag: normalizedTag
-  };
+function areaByName(name) {
+  const normalizedName = String(name || "").trim();
+  if (!normalizedName) return { name: "", tag: "" };
+  const area = areasCache.find((candidate) => candidate.name.toLowerCase() === normalizedName.toLowerCase());
+  return area ? { name: area.name, tag: area.tag } : { name: normalizedName, tag: "" };
 }
 
 function getHotelStays(itinerary) {

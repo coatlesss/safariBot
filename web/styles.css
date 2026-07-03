@@ -452,7 +452,9 @@ textarea {
   gap: 8px;
 }
 
-.hotel-area-row select {
+.hotel-area-row select,
+.hotel-area-row input[type="text"] {
+  width: 100%;
   min-height: 36px;
   border: 1px solid var(--line);
   border-radius: 7px;

@@ -461,6 +461,19 @@ async function ensureIndexedTarget(page, targetSpec, index, addSpec, label) {
   return (await page.locator(targetSpec.selector).count()) > requiredIndex;
 }
 
+async function ensureRowByRetry(page, attemptClick, addSpec, label, maxAttempts = 3, attemptClickAfterAdd = null) {
+  let clicked = await attemptClick();
+  for (let attempt = 0; attempt < maxAttempts && !clicked && addSpec; attempt += 1) {
+    console.warn(`[portalBuilder] ${label}: row not found, clicking add row (attempt ${attempt + 1}).`);
+    const added = await clickTimelineAddButton(page, addSpec, `${label} add row`);
+    if (!added) break;
+    await page.waitForTimeout(700);
+    clicked = attemptClickAfterAdd ? await attemptClickAfterAdd() : await attemptClick();
+    if (!clicked) clicked = await attemptClick();
+  }
+  return clicked;
+}
+
 async function clickTimelineAddButton(page, addSpec, label, targetSpec = null, requiredIndex = null) {
   if (!addSpec) return false;
   const beforeCount = targetSpec?.selector ? await page.locator(targetSpec.selector).count().catch(() => null) : null;
@@ -703,7 +716,12 @@ async function fillHotelDateSelection(page, hotelDatesConfig, itinerary) {
 
   console.warn(`[portalBuilder] Hotel timeline plan: ${timelinePlan.map((item) => `hotel${item.stayIndex + 1}@${item.hotelRowIndex}${item.transferRowIndex == null ? "" : ` transfer@${item.transferRowIndex}`}`).join(", ")}`);
   for (const item of timelinePlan) {
-    await fillHotelStay(page, hotelDatesConfig, item.stay, item.stayIndex, item.hotelRowIndex);
+    try {
+      await fillHotelStay(page, hotelDatesConfig, item.stay, item.stayIndex, item.hotelRowIndex);
+    } catch (error) {
+      console.warn(`[portalBuilder] Hotel ${item.stayIndex + 1} failed, continuing with remaining rows: ${error.message}`);
+      await saveDebugSnapshot(page, `hotel-${item.stayIndex + 1}-failed`);
+    }
   }
 }
 
@@ -717,15 +735,20 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
   let clicked = false;
   let hotelScope = null;
   if (hotelDatesConfig.firstHotelBox) {
-    await ensureIndexedTarget(
-      page,
-      hotelDatesConfig.firstHotelBox,
-      cellIndex,
-      hotelDatesConfig.timelineAddButton,
-      `hotel ${stayIndex + 1} row`
-    );
     const hotelBoxSpec = specForIndex(hotelDatesConfig.firstHotelBox, cellIndex);
-    clicked = await clickSpec(page, hotelBoxSpec, `hotel ${stayIndex + 1} box`);
+    const hotelBoxLastSpec = { ...hotelDatesConfig.firstHotelBox, nth: undefined, last: true };
+    clicked = await ensureRowByRetry(
+      page,
+      async () => {
+        const probe = await locatorFromSpec(page, hotelBoxSpec);
+        if (!probe || (await probe.count()) === 0) return false;
+        return clickSpec(page, hotelBoxSpec, `hotel ${stayIndex + 1} box`);
+      },
+      hotelDatesConfig.timelineAddButton,
+      `hotel ${stayIndex + 1} row`,
+      3,
+      () => clickSpec(page, hotelBoxLastSpec, `hotel ${stayIndex + 1} box (newly added)`)
+    );
     if (!clicked) {
       console.warn("Warning: hotelDates.firstHotelBox did not resolve, trying fallback selector.");
       const fallbackSpec = { selector: "div[class*='Table_activeMenuWrapper']", nth: cellIndex };
@@ -758,8 +781,13 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
     await page.waitForTimeout(300);
   }
 
-  clicked = false;
-  if (hotelDatesConfig.calendarTrigger) {
+  clicked = hotelDatesConfig.calendarMonth
+    ? (await page.locator(hotelDatesConfig.calendarMonth.selector).count()) > 0
+    : false;
+  if (clicked) {
+    console.warn(`[portalBuilder] hotel ${stayIndex + 1}: calendar already open (from accommodation menu), skipping trigger click.`);
+  }
+  if (!clicked && hotelDatesConfig.calendarTrigger) {
     clicked = await clickSpec(page, specForIndex(hotelDatesConfig.calendarTrigger, cellIndex), `hotel ${stayIndex + 1} calendar trigger`);
   }
   if (!clicked) {
@@ -843,6 +871,7 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
       clicked = true;
     } else {
       console.warn("Warning: no calendar day cell could be clicked by fallback selector.");
+      await saveDebugSnapshot(page, `hotel-${stayIndex + 1}-calendar-not-found`);
     }
   }
   await page.waitForTimeout(300);
@@ -1153,6 +1182,12 @@ async function buildPortalDraft(config, itinerary, options = {}) {
   browser.on("disconnected", () => openDraftBrowsers.delete(browser));
   const context = await browser.newContext({ storageState: storagePath });
   const page = await context.newPage();
+  page.on("dialog", async (dialog) => {
+    console.warn(`[portalBuilder] Unexpected dialog appeared (${dialog.type()}): ${dialog.message()}`);
+    try {
+      await dialog.dismiss();
+    } catch (_) {}
+  });
 
   try {
     await page.goto(config.newItineraryUrl, { waitUntil: "domcontentloaded" });

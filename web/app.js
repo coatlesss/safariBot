@@ -31,7 +31,7 @@ let propertiesCache = [];
 let transfersCache = [];
 const hotelAreasContainer = document.querySelector("#hotelAreas");
 let hotelAreaMap = {};
-let hotelPropertyMap = {};
+let hotelOptionsMap = {};
 let transferSegmentMap = {};
 const clientTypeSelect = document.querySelector("#clientTypeSelect");
 const agencySelect = document.querySelector("#agencySelect");
@@ -40,7 +40,7 @@ const agencyCustomWrap = document.querySelector("#agencyCustomWrap");
 const agencyNameInput = document.querySelector("#agencyNameInput");
 
 let parsedItinerary = null;
-let stayRows = [{ location: "", hotel: "", nights: 1 }];
+let stayRows = [{ location: "", nights: 1, hotels: [{ name: "", rooms: "" }] }];
 
 parseButton.addEventListener("click", parseCurrentText);
 templateButton.addEventListener("click", loadTemplate);
@@ -60,7 +60,7 @@ agencySelect.addEventListener("change", updateAgencyControls);
 tabPasteButton.addEventListener("click", () => showTab("paste"));
 tabBuilderButton.addEventListener("click", () => showTab("builder"));
 addStayButton.addEventListener("click", () => {
-  stayRows.push({ location: "", hotel: "", nights: 1 });
+  stayRows.push({ location: "", nights: 1, hotels: [{ name: "", rooms: "" }] });
   renderStayRows();
 });
 generateItineraryButton.addEventListener("click", generateItinerary);
@@ -161,46 +161,52 @@ function showTab(tab) {
 }
 
 function renderStayRows() {
-  stayRowsContainer.innerHTML = stayRows.map((row, index) => `
+  stayRowsContainer.innerHTML = stayRows.map((stay, index) => `
     <div class="stay-row" data-index="${index}">
-      <label class="text-control">
-        <span>Location</span>
-        <div class="autocomplete">
-          <input type="text" class="stay-location" autocomplete="off" placeholder="Osaka" value="${escapeHtml(row.location)}">
-          <div class="autocomplete-list hidden"></div>
-        </div>
-      </label>
-      <label class="text-control">
-        <span>Hotel</span>
-        <div class="autocomplete">
-          <input type="text" class="stay-hotel" autocomplete="off" placeholder="Zentis Osaka" value="${escapeHtml(row.hotel)}">
-          <div class="autocomplete-list hidden"></div>
-        </div>
-      </label>
-      <label class="text-control nights-control">
-        <span>Nights</span>
-        <input type="number" class="stay-nights" min="1" value="${row.nights}">
-      </label>
-      <button type="button" class="stay-remove small" aria-label="Remove stay" ${stayRows.length <= 1 ? "disabled" : ""}>Remove</button>
+      <div class="stay-row-top">
+        <label class="text-control">
+          <span>Location</span>
+          <div class="autocomplete">
+            <input type="text" class="stay-location" autocomplete="off" placeholder="Osaka" value="${escapeHtml(stay.location)}">
+            <div class="autocomplete-list hidden"></div>
+          </div>
+        </label>
+        <label class="text-control nights-control">
+          <span>Nights</span>
+          <input type="number" class="stay-nights" min="1" value="${stay.nights}">
+        </label>
+        <button type="button" class="stay-remove small" aria-label="Remove stay" ${stayRows.length <= 1 ? "disabled" : ""}>Remove Stay</button>
+      </div>
+      <div class="stay-hotel-options">
+        ${stay.hotels.map((hotel, hotelIndex) => `
+          <div class="stay-hotel-option" data-hotel-index="${hotelIndex}">
+            <label class="text-control">
+              <span>${hotelIndex === 0 ? "Hotel" : `Alternate hotel ${hotelIndex}`}</span>
+              <div class="autocomplete">
+                <input type="text" class="stay-hotel" autocomplete="off" placeholder="Zentis Osaka" value="${escapeHtml(hotel.name)}">
+                <div class="autocomplete-list hidden"></div>
+              </div>
+            </label>
+            <label class="text-control">
+              <span>Rooms (optional)</span>
+              <input type="text" class="stay-hotel-rooms" autocomplete="off" placeholder="Deluxe Room King, ..." value="${escapeHtml(hotel.rooms)}">
+            </label>
+            <button type="button" class="stay-hotel-remove small" aria-label="Remove hotel option" ${stay.hotels.length <= 1 ? "disabled" : ""}>Remove</button>
+          </div>
+        `).join("")}
+      </div>
+      <div class="button-row">
+        <button type="button" class="stay-add-hotel small">+ Add alternate hotel</button>
+      </div>
     </div>
   `).join("");
 
   stayRowsContainer.querySelectorAll(".stay-row").forEach((rowEl) => {
     const index = Number(rowEl.getAttribute("data-index"));
     const locationInput = rowEl.querySelector(".stay-location");
-    const hotelInput = rowEl.querySelector(".stay-hotel");
 
     locationInput.addEventListener("input", (e) => {
       stayRows[index].location = e.target.value;
-    });
-
-    hotelInput.addEventListener("input", (e) => {
-      stayRows[index].hotel = e.target.value;
-      const matched = propertiesCache.find((p) => p.name === e.target.value.trim());
-      if (matched?.area && !stayRows[index].location) {
-        stayRows[index].location = matched.area;
-        renderStayRows();
-      }
     });
 
     attachAutocomplete(
@@ -213,18 +219,6 @@ function renderStayRows() {
       }
     );
 
-    attachAutocomplete(
-      hotelInput,
-      hotelInput.closest(".autocomplete").querySelector(".autocomplete-list"),
-      () => propertiesCache.map((p) => p.name),
-      (value) => {
-        stayRows[index].hotel = value;
-        const matched = propertiesCache.find((p) => p.name === value);
-        if (matched?.area) stayRows[index].location = matched.area;
-        renderStayRows();
-      }
-    );
-
     rowEl.querySelector(".stay-nights").addEventListener("input", (e) => {
       stayRows[index].nights = Math.max(1, Number(e.target.value) || 1);
     });
@@ -232,6 +226,52 @@ function renderStayRows() {
     rowEl.querySelector(".stay-remove").addEventListener("click", () => {
       if (stayRows.length <= 1) return;
       stayRows.splice(index, 1);
+      renderStayRows();
+    });
+
+    rowEl.querySelectorAll(".stay-hotel-option").forEach((hotelEl) => {
+      const hotelIndex = Number(hotelEl.getAttribute("data-hotel-index"));
+      const hotelInput = hotelEl.querySelector(".stay-hotel");
+      const roomsInput = hotelEl.querySelector(".stay-hotel-rooms");
+
+      hotelInput.addEventListener("input", (e) => {
+        stayRows[index].hotels[hotelIndex].name = e.target.value;
+        if (hotelIndex === 0) {
+          const matched = propertiesCache.find((p) => p.name === e.target.value.trim());
+          if (matched?.area && !stayRows[index].location) {
+            stayRows[index].location = matched.area;
+            renderStayRows();
+          }
+        }
+      });
+
+      attachAutocomplete(
+        hotelInput,
+        hotelInput.closest(".autocomplete").querySelector(".autocomplete-list"),
+        () => propertiesCache.map((p) => p.name),
+        (value) => {
+          stayRows[index].hotels[hotelIndex].name = value;
+          if (hotelIndex === 0) {
+            const matched = propertiesCache.find((p) => p.name === value);
+            if (matched?.area) stayRows[index].location = matched.area;
+          }
+          renderStayRows();
+        }
+      );
+
+      roomsInput.addEventListener("input", (e) => {
+        stayRows[index].hotels[hotelIndex].rooms = e.target.value;
+      });
+
+      hotelEl.querySelector(".stay-hotel-remove").addEventListener("click", () => {
+        if (stayRows[index].hotels.length <= 1) return;
+        stayRows[index].hotels.splice(hotelIndex, 1);
+        renderStayRows();
+      });
+    });
+
+    rowEl.querySelector(".stay-add-hotel").addEventListener("click", () => {
+      stayRows[index].hotels.push({ name: "", rooms: "" });
       renderStayRows();
     });
   });
@@ -273,7 +313,7 @@ function attachAutocomplete(inputEl, listEl, getOptions, onSelect) {
 function generateItinerary() {
   const clientName = builderClientNameInput.value.trim();
   const tripTitle = builderTripTitleInput.value.trim();
-  const validStays = stayRows.filter((row) => row.location.trim() || row.hotel.trim());
+  const validStays = stayRows.filter((stay) => stay.location.trim() || stay.hotels.some((hotel) => hotel.name.trim()));
 
   if (!validStays.length) {
     setMessage("Add at least one stay with a location or hotel before generating.", true);
@@ -294,7 +334,16 @@ function generateItinerary() {
     const dayLabel = dayStart === dayEnd ? `Day ${dayStart}` : `Day ${dayStart}-${dayEnd}`;
     const location = stay.location.trim();
     lines.push(location ? `${dayLabel}: ${location}` : dayLabel);
-    if (stay.hotel.trim()) lines.push(`Accommodation: ${stay.hotel.trim()}`);
+
+    const accommodationText = stay.hotels
+      .filter((hotel) => hotel.name.trim())
+      .map((hotel) => {
+        const rooms = hotel.rooms.trim();
+        return rooms ? `${hotel.name.trim()} [${rooms}]` : hotel.name.trim();
+      })
+      .join(" or ");
+    if (accommodationText) lines.push(`Accommodation: ${accommodationText}`);
+
     lines.push("");
     dayNumber = dayEnd + 1;
   }
@@ -533,7 +582,8 @@ function withCurrentMetadata(itinerary) {
       areaName: perDayAreas[i]?.name || meta.areaName || "",
       areaTag: perDayAreas[i]?.tag || meta.areaTag || "",
       transferAfter: transferByStartIndex.get(i) || null,
-      ...propertyForDay(d, i, itinerary)
+      ...propertyForDay(d, i, itinerary),
+      ...accommodationOptionsForDay(d, i, itinerary)
     }))
   };
 }
@@ -550,21 +600,34 @@ function renderHotelAreaControls(itinerary) {
 
   hotelAreasContainer.innerHTML = `
     <div class="hotel-areas-header"><strong>Hotel Setup</strong></div>
-    ${stays.map((stay) => `
-      <label class="hotel-area-row">
-        <span>${escapeHtml(stay.label)}</span>
-        <span class="hotel-select-group">
-          <div class="autocomplete">
-            <input type="text" class="hotel-property-input" data-stay-key="${escapeHtml(stay.key)}" placeholder="Match property" autocomplete="off">
+    ${stays.map((stay) => {
+      const hotels = getStayHotelOptions(stay);
+      const hasAlternates = hotels.length > 1;
+      return `
+      <div class="hotel-setup-row" data-stay-key="${escapeHtml(stay.key)}">
+        <div class="hotel-setup-header">
+          <span class="hotel-setup-label">${escapeHtml(stay.label)}</span>
+          <div class="autocomplete hotel-setup-area">
+            <input type="text" class="hotel-area-input" placeholder="Inherit area" autocomplete="off">
             <div class="autocomplete-list hidden"></div>
           </div>
-          <div class="autocomplete">
-            <input type="text" class="hotel-area-input" data-stay-key="${escapeHtml(stay.key)}" placeholder="Inherit area" autocomplete="off">
-            <div class="autocomplete-list hidden"></div>
-          </div>
-        </span>
-      </label>
-    `).join('')}
+        </div>
+        <div class="stay-hotel-options">
+          ${hotels.map((hotel, hotelIndex) => `
+            <div class="stay-hotel-option ${hasAlternates ? "" : "stay-hotel-option-single"}" data-hotel-index="${hotelIndex}">
+              <div class="autocomplete">
+                <input type="text" class="hotel-property-input" placeholder="Match property" autocomplete="off" value="${escapeHtml(hotel.name)}">
+                <div class="autocomplete-list hidden"></div>
+              </div>
+              <input type="text" class="hotel-option-rooms" placeholder="Rooms (optional)" autocomplete="off" value="${escapeHtml(hotel.rooms)}">
+              ${hasAlternates ? `<button type="button" class="hotel-option-remove small" aria-label="Remove hotel option">Remove</button>` : ""}
+            </div>
+          `).join("")}
+        </div>
+        <button type="button" class="hotel-option-add link-button">+ Add alternate hotel</button>
+      </div>
+    `;
+    }).join('')}
     ${renderTransferControls(stays, computePerDayAreas(itinerary))}
   `;
 }
@@ -609,19 +672,22 @@ function renderTransferControls(stays, perDayAreas) {
 
 function bindHotelAreaControls(itinerary) {
   if (!hotelAreasContainer) return;
+  const stays = getHotelStays(itinerary);
 
-  const areaInputs = hotelAreasContainer.querySelectorAll(".hotel-area-input");
-  areaInputs.forEach((inputEl) => {
-    const stayKey = inputEl.getAttribute("data-stay-key") || "";
-    const currentName = hotelAreaMap[stayKey] || "";
-    inputEl.value = currentName;
+  hotelAreasContainer.querySelectorAll(".hotel-setup-row").forEach((rowEl) => {
+    const stayKey = rowEl.getAttribute("data-stay-key") || "";
+    const stay = stays.find((candidate) => candidate.key === stayKey);
+    if (!stay) return;
+
+    const areaInput = rowEl.querySelector(".hotel-area-input");
+    areaInput.value = hotelAreaMap[stayKey] || "";
 
     function applyAreaValue(value) {
       const trimmed = value.trim();
       const matched = areasCache.find((a) => a.name.toLowerCase() === trimmed.toLowerCase());
       if (matched) {
         hotelAreaMap[stayKey] = matched.name;
-        inputEl.value = matched.name;
+        areaInput.value = matched.name;
       } else {
         delete hotelAreaMap[stayKey];
       }
@@ -629,37 +695,55 @@ function bindHotelAreaControls(itinerary) {
       renderItinerary(parsedItinerary);
     }
 
-    inputEl.addEventListener("change", (e) => applyAreaValue(e.target.value));
+    areaInput.addEventListener("change", (e) => applyAreaValue(e.target.value));
     attachAutocomplete(
-      inputEl,
-      inputEl.closest(".autocomplete").querySelector(".autocomplete-list"),
+      areaInput,
+      areaInput.closest(".autocomplete").querySelector(".autocomplete-list"),
       () => areasCache.map((a) => a.name),
       applyAreaValue
     );
-  });
 
-  const propertyInputs = hotelAreasContainer.querySelectorAll(".hotel-property-input");
-  propertyInputs.forEach((inputEl) => {
-    const stayKey = inputEl.getAttribute("data-stay-key") || "";
-    const stay = getHotelStays(itinerary).find((candidate) => candidate.key === stayKey);
-    const matched = hotelPropertyMap[stayKey] || autoMatchPropertyName(stay?.accommodation || "");
-    if (matched) hotelPropertyMap[stayKey] = matched;
-    inputEl.value = matched || "";
+    rowEl.querySelectorAll(".stay-hotel-option").forEach((hotelEl) => {
+      const hotelIndex = Number(hotelEl.getAttribute("data-hotel-index"));
+      const propertyInput = hotelEl.querySelector(".hotel-property-input");
+      const roomsInput = hotelEl.querySelector(".hotel-option-rooms");
 
-    function applyPropertyValue(value) {
-      const trimmed = value.trim();
-      if (trimmed) hotelPropertyMap[stayKey] = trimmed; else delete hotelPropertyMap[stayKey];
+      function applyPropertyValue(value) {
+        hotelOptionsMap[stayKey][hotelIndex].name = value.trim();
+        parsedItinerary = withCurrentMetadata(itinerary);
+        renderItinerary(parsedItinerary);
+      }
+
+      propertyInput.addEventListener("change", (e) => applyPropertyValue(e.target.value));
+      attachAutocomplete(
+        propertyInput,
+        propertyInput.closest(".autocomplete").querySelector(".autocomplete-list"),
+        () => propertiesCache.map((p) => p.name),
+        applyPropertyValue
+      );
+
+      roomsInput.addEventListener("change", (e) => {
+        hotelOptionsMap[stayKey][hotelIndex].rooms = e.target.value;
+        parsedItinerary = withCurrentMetadata(itinerary);
+        renderItinerary(parsedItinerary);
+      });
+
+      const removeButton = hotelEl.querySelector(".hotel-option-remove");
+      if (removeButton) {
+        removeButton.addEventListener("click", () => {
+          if (hotelOptionsMap[stayKey].length <= 1) return;
+          hotelOptionsMap[stayKey].splice(hotelIndex, 1);
+          parsedItinerary = withCurrentMetadata(itinerary);
+          renderItinerary(parsedItinerary);
+        });
+      }
+    });
+
+    rowEl.querySelector(".hotel-option-add").addEventListener("click", () => {
+      hotelOptionsMap[stayKey].push({ name: "", rooms: "" });
       parsedItinerary = withCurrentMetadata(itinerary);
       renderItinerary(parsedItinerary);
-    }
-
-    inputEl.addEventListener("change", (e) => applyPropertyValue(e.target.value));
-    attachAutocomplete(
-      inputEl,
-      inputEl.closest(".autocomplete").querySelector(".autocomplete-list"),
-      () => propertiesCache.map((p) => p.name),
-      applyPropertyValue
-    );
+    });
   });
 
   const transferSelects = hotelAreasContainer.querySelectorAll(".transfer-segment-select");
@@ -705,7 +789,7 @@ function computePerDayAreas(itinerary) {
 // Look up the area for a stay via its matched property's "Area" column, falling
 // back to the stay's own parsed location if the property doesn't resolve one.
 function resolveStayArea(stay) {
-  const propertyName = hotelPropertyMap[stay.key] || autoMatchPropertyName(stay.accommodation);
+  const propertyName = primaryPropertyName(stay);
   const property = propertyName ? propertiesCache.find((candidate) => candidate.name === propertyName) : null;
   const candidateNames = [property?.area, stay.location].filter(Boolean);
 
@@ -715,6 +799,30 @@ function resolveStayArea(stay) {
   }
 
   return null;
+}
+
+// The hotel-options list for a stay (primary hotel plus any alternates), lazily
+// initialized from whatever was already parsed (e.g. text using "Hotel A or
+// Hotel B [Rooms]") or, failing that, an auto-matched property. Both the Hotel
+// Setup panel and the itinerary-building metadata read from this single map so
+// they never drift out of sync with each other.
+function getStayHotelOptions(stay) {
+  if (!hotelOptionsMap[stay.key]) {
+    if (stay.accommodationOptions?.length) {
+      hotelOptionsMap[stay.key] = stay.accommodationOptions.map((option) => ({
+        name: option.name,
+        rooms: (option.rooms || []).join(", ")
+      }));
+    } else {
+      const matched = autoMatchPropertyName(stay.accommodation) || stay.accommodation || "";
+      hotelOptionsMap[stay.key] = [{ name: matched, rooms: "" }];
+    }
+  }
+  return hotelOptionsMap[stay.key];
+}
+
+function primaryPropertyName(stay) {
+  return getStayHotelOptions(stay)[0]?.name.trim() || "";
 }
 
 function areaByName(name) {
@@ -754,6 +862,7 @@ function getHotelStays(itinerary) {
       startIndex: index,
       endIndex,
       accommodation,
+      accommodationOptions: day.accommodationOptions || null,
       location,
       startDate: day.date || "",
       endDate: tripDays[endIndex].date || day.date || "",
@@ -834,13 +943,34 @@ function normalizeTransferSegment(value) {
 
 function propertyForDay(day, index, itinerary) {
   const stay = getHotelStays(itinerary).find((candidate) => index >= candidate.startIndex && index <= candidate.endIndex);
-  const propertyName = hotelPropertyMap[stay?.key] || autoMatchPropertyName(day.accommodation);
+  const propertyName = stay ? primaryPropertyName(stay) : autoMatchPropertyName(day.accommodation);
   if (!propertyName) return { propertyName: "", propertyTag: "" };
   const property = propertiesCache.find((candidate) => candidate.name === propertyName);
   return {
     propertyName,
     propertyTag: property?.tag || ""
   };
+}
+
+// Builds the accommodationOptions override for a day from the Hotel Setup
+// panel's per-stay hotel list, only when there's actually more than one option
+// or a room selection - a single plain hotel with no rooms needs no override,
+// since propertyForDay above already covers that common case.
+function accommodationOptionsForDay(day, index, itinerary) {
+  const stay = getHotelStays(itinerary).find((candidate) => index >= candidate.startIndex && index <= candidate.endIndex);
+  if (!stay) return {};
+
+  const cleaned = getStayHotelOptions(stay)
+    .filter((option) => option.name.trim())
+    .map((option) => ({
+      name: option.name.trim(),
+      rooms: option.rooms.split(",").map((room) => room.trim()).filter(Boolean)
+    }));
+
+  if (cleaned.length > 1 || cleaned.some((option) => option.rooms.length)) {
+    return { accommodationOptions: cleaned };
+  }
+  return {};
 }
 
 function autoMatchPropertyName(accommodation) {

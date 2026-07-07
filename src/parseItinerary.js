@@ -65,6 +65,19 @@ function looksLikeDate(text, fallbackYear) {
   return /^\d{4}-\d{2}-\d{2}$/.test(normalizeDate(text, fallbackYear));
 }
 
+// Parses "Hotel A [Room X] or Hotel B [Room Y, Room Z]" into per-hotel option
+// objects, matching the Safari Portal's own "or"-separated multi-mention
+// syntax for offering clients a choice of accommodation. Brackets are optional
+// per hotel and list which specific room(s) to select for that option.
+function parseAccommodationOptions(value) {
+  return value.split(/\s+or\s+/i).map((piece) => piece.trim()).filter(Boolean).map((piece) => {
+    const match = piece.match(/^(.*?)(?:\s*\[([^\]]*)\])?$/);
+    const name = (match?.[1] || piece).trim();
+    const rooms = match?.[2] ? match[2].split(",").map((room) => room.trim()).filter(Boolean) : [];
+    return { name, rooms };
+  });
+}
+
 function pushValue(target, field, value) {
   const trimmed = value.trim();
   if (!trimmed) return;
@@ -179,8 +192,16 @@ function parseItinerary(text) {
 
       const label = field[1].toLowerCase();
       const value = field[2];
+      const accommodationOptions = ["accommodation", "hotel", "lodge", "camp"].includes(label)
+        ? parseAccommodationOptions(value)
+        : null;
       for (const currentDay of currentDayGroup) {
-        if (["accommodation", "hotel", "lodge", "camp"].includes(label)) pushValue(currentDay, "accommodation", value);
+        if (accommodationOptions) {
+          pushValue(currentDay, "accommodation", accommodationOptions[0]?.name || value);
+          if (accommodationOptions.length > 1 || accommodationOptions.some((option) => option.rooms.length)) {
+            currentDay.accommodationOptions = accommodationOptions;
+          }
+        }
         if (["activity", "activities"].includes(label)) pushValue(currentDay, "activities", value);
         if (["transfer", "transfers"].includes(label)) pushValue(currentDay, "transfers", value);
         if (["flight", "flights"].includes(label)) pushValue(currentDay, "flights", value);
@@ -228,7 +249,8 @@ function parseHotelItinerary(text, options = {}) {
       transfers: [],
       flights: [],
       meals: [],
-      notes: []
+      notes: [],
+      ...(day.accommodationOptions ? { accommodationOptions: day.accommodationOptions } : {})
     }));
 
   if (itinerary.days.length) {

@@ -3,6 +3,7 @@ const path = require("path");
 const { chromium } = require("playwright");
 
 const openDraftBrowsers = new Set();
+let _debugLastPage = null;
 
 function asText(value) {
   if (!value) return "";
@@ -711,7 +712,8 @@ function hotelEndDateForStay(stay) {
 
 async function fillHotelDateSelection(page, hotelDatesConfig, itinerary) {
   if (!hotelDatesConfig || !itinerary.days?.length) return;
-  const timelinePlan = buildHotelTimelinePlan(itinerary.days);
+  let timelinePlan = buildHotelTimelinePlan(itinerary.days);
+  if (process.env.SAFARI_BOT_DEBUG_ONE_HOTEL) timelinePlan = timelinePlan.slice(0, 1);
   if (!timelinePlan.length) return;
 
   console.warn(`[portalBuilder] Hotel timeline plan: ${timelinePlan.map((item) => `hotel${item.stayIndex + 1}@${item.hotelRowIndex}${item.transferRowIndex == null ? "" : ` transfer@${item.transferRowIndex}`}`).join(", ")}`);
@@ -903,16 +905,29 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
   }
 
   if (hotelDatesConfig.hotelName) {
+    const accommodationOptions = firstHotel.accommodationOptions?.length ? firstHotel.accommodationOptions : null;
     const hotelMention = getHotelNameMention(firstHotel);
-    if (hotelMention) {
-      const filled = await fillDraftEditorMention(
-        page,
-        hotelDatesConfig.hotelName,
-        hotelMention,
-        `hotel ${stayIndex + 1} name details`,
-        hotelScope,
-        specWithIndex(hotelDatesConfig.hotelName, hotelEditorIndex)
-      );
+    const label = `hotel ${stayIndex + 1} name details`;
+
+    if (accommodationOptions || hotelMention) {
+      const filled = accommodationOptions
+        ? await fillHotelNameOptions(
+            page,
+            hotelDatesConfig.hotelName,
+            accommodationOptions,
+            label,
+            hotelScope,
+            specWithIndex(hotelDatesConfig.hotelName, hotelEditorIndex)
+          )
+        : await fillDraftEditorMention(
+            page,
+            hotelDatesConfig.hotelName,
+            hotelMention,
+            label,
+            hotelScope,
+            specWithIndex(hotelDatesConfig.hotelName, hotelEditorIndex)
+          );
+
       if (!filled) {
         console.warn("Warning: hotelDates.hotelName did not resolve or could not be filled.");
       } else if (hotelDatesConfig.hotelAddButton) {
@@ -921,7 +936,6 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
           console.warn("Warning: hotelDates.hotelAddButton did not resolve or could not be clicked.");
         }
       }
-
     }
   }
 
@@ -1112,6 +1126,119 @@ async function fillDraftEditorMention(page, spec, value, label, scope = page, fa
   }
 }
 
+function optionLetter(index) {
+  return String.fromCharCode(65 + index); // 0 -> A, 1 -> B, 2 -> C, ...
+}
+
+// Types multiple accommodation options into one mention field as
+// "@Hotel [A] @Hotel [B]", labeling each choice for the client. Each option
+// can trigger a "which room(s)?" modal (handled per option) and the whole
+// entry can trigger a final "include the area page?" prompt (handled once,
+// after all options are committed).
+async function fillHotelNameOptions(page, spec, options, label, scope = page, fallbackSpec = null) {
+  let locator = await locatorFromSpec(scope || page, spec);
+  if (locator && (await locator.count()) === 0) locator = null;
+  if (!locator && fallbackSpec) locator = await locatorFromSpec(page, fallbackSpec);
+  if (!locator) {
+    console.warn(`[portalBuilder] Could not resolve locator for ${label}`);
+    return false;
+  }
+
+  try {
+    await locator.waitFor({ state: "visible", timeout: 5000 });
+    await locator.scrollIntoViewIfNeeded();
+    await locator.click({ force: true });
+    await page.waitForTimeout(150);
+    if (spec.clearBeforeType !== false) {
+      await page.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+      await page.keyboard.press("Backspace");
+      await page.waitForTimeout(100);
+    }
+    await placeCaretAtEnd(locator);
+
+    // Re-clicking and re-anchoring the caret before every typed segment (not
+    // just after a modal) guards against DraftJS snapping the caret to an
+    // unexpected spot around the mention entity's boundary - without this,
+    // labels and subsequent mentions can land out of order.
+    async function typeAtEnd(text) {
+      await locator.click({ force: true });
+      await placeCaretAtEnd(locator);
+      await page.keyboard.type(text, { delay: 35 });
+    }
+
+    for (let index = 0; index < options.length; index += 1) {
+      const option = options[index];
+      const mention = option.name.startsWith("@") ? option.name : `@${option.name}`;
+      const prefix = index === 0 ? "" : " ";
+      await typeAtEnd(`${prefix}${mention}`);
+      await page.waitForTimeout(spec.commitDelayMs || 1000);
+      if (spec.arrowDownBeforeEnter) {
+        await page.keyboard.press("ArrowDown");
+        await page.waitForTimeout(150);
+      }
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(300);
+
+      if (options.length > 1) {
+        await typeAtEnd(` [${optionLetter(index)}]`);
+        await page.waitForTimeout(200);
+      }
+
+      await selectRoomsIfPrompted(page, option.rooms, `${label} (${option.name})`);
+    }
+
+    await confirmAreaPageIfPrompted(page, label);
+    return true;
+  } catch (error) {
+    console.warn(`[portalBuilder] Could not type ${label}: ${error.message}`);
+    return false;
+  }
+}
+
+async function selectRoomsIfPrompted(page, rooms, label) {
+  const modal = page.locator(".Rooms_container__1syeg").first();
+  try {
+    await modal.waitFor({ state: "visible", timeout: 3000 });
+  } catch (_) {
+    return; // no room-selection modal appeared for this option
+  }
+
+  for (const room of rooms || []) {
+    const roomOption = modal.locator("label.CheckBox_checkboxWrapper__1kMod", { hasText: room }).first();
+    if ((await roomOption.count()) > 0) {
+      await roomOption.click();
+      await page.waitForTimeout(150);
+    } else {
+      console.warn(`[portalBuilder] Room "${room}" not found in selection modal for ${label}.`);
+    }
+  }
+
+  const nextButton = modal.getByRole("button", { name: "Next" }).first();
+  if ((await nextButton.count()) > 0) {
+    await nextButton.click();
+    await page.waitForTimeout(400);
+  } else {
+    console.warn(`[portalBuilder] Could not find Next button in room selection modal for ${label}.`);
+  }
+}
+
+async function confirmAreaPageIfPrompted(page, label) {
+  const modal = page.locator(".AreaSelect_container__1d4aZ").first();
+  try {
+    await modal.waitFor({ state: "visible", timeout: 3000 });
+  } catch (_) {
+    return; // no "include the area page?" prompt appeared
+  }
+
+  const yesButton = modal.getByRole("button", { name: "Yes", exact: true }).first();
+  if ((await yesButton.count()) > 0) {
+    await yesButton.click();
+    await page.waitForTimeout(600);
+  } else {
+    console.warn(`[portalBuilder] Could not find Yes button on area-page prompt for ${label}.`);
+  }
+}
+
 async function placeCaretAtEnd(locator) {
   try {
     await locator.evaluate((element) => {
@@ -1270,6 +1397,7 @@ async function buildPortalDraft(config, itinerary, options = {}) {
 
     if (options.keepOpen) {
       openDraftBrowsers.add(browser);
+      _debugLastPage = page;
       return;
     }
 
@@ -1296,5 +1424,6 @@ async function closeOpenDraftBrowsers() {
 module.exports = {
   buildPortalDraft,
   buildHotelTimelinePlan,
-  closeOpenDraftBrowsers
+  closeOpenDraftBrowsers,
+  _getDebugLastPage: () => _debugLastPage
 };

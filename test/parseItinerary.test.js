@@ -106,6 +106,27 @@ Accommodation: Noku Kyoto
   assert.equal(result.days[2].accommodation, "Noku Kyoto");
 });
 
+test("parses 'Hotel A [Rooms] or Hotel B [Rooms]' into accommodation options", () => {
+  const result = parseItinerary(`
+Day 1-2: Aug 12 | Osaka
+Accommodation: Zentis Osaka or Noku Kyoto [House Room King, Noku Studio]
+
+Day 3: Aug 14 | Kyoto
+Accommodation: Plain Hotel No Options
+`);
+
+  assert.equal(result.days[0].accommodation, "Zentis Osaka");
+  assert.deepEqual(result.days[0].accommodationOptions, [
+    { name: "Zentis Osaka", rooms: [] },
+    { name: "Noku Kyoto", rooms: ["House Room King", "Noku Studio"] }
+  ]);
+  // The heading covers days 1-2, so the option list applies to both.
+  assert.deepEqual(result.days[1].accommodationOptions, result.days[0].accommodationOptions);
+  // A plain single-hotel entry should not grow an accommodationOptions field.
+  assert.equal(result.days[2].accommodation, "Plain Hotel No Options");
+  assert.equal(result.days[2].accommodationOptions, undefined);
+});
+
 test("parses tabular day and location rows as hotel placeholders", () => {
   const result = parseHotelItinerary(`
 Day 1-5	Heda-Ito	Own arrangement

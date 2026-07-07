@@ -171,9 +171,8 @@ h2 {
   min-height: calc(100vh - 124px);
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-  padding: 16px;
+  border-radius: 10px;
+  padding: 20px;
 }
 
 .pane-header,
@@ -219,10 +218,7 @@ h2 {
 
 .client-controls {
   align-items: flex-end;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel-soft);
+  padding-bottom: 6px;
 }
 
 .text-control,
@@ -302,13 +298,54 @@ button.small {
 
 .stay-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.3fr) 90px auto;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.stay-row:last-of-type {
+  border-bottom: none;
+}
+
+.stay-row-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) 90px auto;
   align-items: end;
   gap: 8px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel-soft);
+}
+
+.stay-hotel-options {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line-strong);
+}
+
+.stay-hotel-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.3fr) auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.stay-hotel-option-single {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.3fr);
+}
+
+.link-button {
+  justify-self: start;
+  min-height: 0;
+  border: none;
+  background: none;
+  padding: 2px 0;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.link-button:hover {
+  background: none;
+  text-decoration: underline;
 }
 
 .nights-control {
@@ -319,11 +356,9 @@ button.small {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel-soft);
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
   font-size: 14px;
 }
 
@@ -356,11 +391,9 @@ textarea {
 }
 
 .control-band {
-  margin-top: 10px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel-soft);
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
 }
 
 .parse-controls {
@@ -385,16 +418,10 @@ textarea {
   margin-bottom: 12px;
 }
 
-.summary-item,
-.day-card,
-.hotel-areas {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-
 .summary-item {
-  min-height: 70px;
-  padding: 10px;
+  min-height: 64px;
+  padding: 8px 10px;
+  border-radius: 7px;
   background: var(--panel-tint);
 }
 
@@ -416,7 +443,8 @@ textarea {
   display: grid;
   gap: 8px;
   margin-bottom: 12px;
-  padding: 12px;
+  padding: 14px;
+  border-radius: 8px;
   background: var(--panel-soft);
 }
 
@@ -439,6 +467,35 @@ textarea {
   grid-template-columns: minmax(160px, 0.8fr) minmax(240px, 1.2fr);
   align-items: center;
   gap: 10px;
+  font-size: 13px;
+}
+
+.hotel-setup-row {
+  display: grid;
+  gap: 6px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.hotel-setup-row:last-of-type {
+  border-bottom: none;
+}
+
+.hotel-setup-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.6fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.hotel-setup-label {
+  font-size: 13px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.hotel-setup-area input {
+  min-height: 32px;
   font-size: 13px;
 }
 
@@ -496,15 +553,18 @@ textarea {
 
 .days-list {
   display: grid;
-  gap: 9px;
   max-height: calc(100vh - 280px);
   overflow: auto;
   padding-right: 4px;
 }
 
 .day-card {
-  padding: 12px;
-  background: #fff;
+  padding: 14px 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.day-card:last-child {
+  border-bottom: none;
 }
 
 .day-title {
@@ -563,7 +623,9 @@ textarea {
   .summary-grid,
   .hotel-area-row,
   .hotel-select-group,
-  .stay-row {
+  .stay-row-top,
+  .stay-hotel-option,
+  .hotel-setup-header {
     grid-template-columns: 1fr;
   }
 

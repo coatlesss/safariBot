@@ -180,7 +180,7 @@ Day 1	Osaka	Arrival and free evening
 7	Flight back
 `, { startDate: "2026-08-12" });
 
-  const plan = buildHotelTimelinePlan(result.days);
+  const plan = buildHotelTimelinePlan(result.days, { includeArrival: false, includeDeparture: false });
 
   assert.equal(result.days.length, 6);
   assert.deepEqual(plan.map((item) => item.hotelRowIndex), [0, 2, 4, 6, 8]);
@@ -191,4 +191,33 @@ Day 1	Osaka	Arrival and free evening
   assert.equal(plan[2].transferTag, "@TransferHakonetoTokyoHakoneTokyoNormal");
   assert.equal(plan[3].transferTag, "@TransferTokyotoHiroshimaTokyoHiroshimaNormal");
   assert.equal(plan[4].transferTag, "");
+});
+
+test("adds arrival/departure boundary rows by default, respecting per-trip opt-out", () => {
+  const result = parseHotelItinerary(`
+Day 1	Osaka	Arrival and free evening
+2	Kyoto	Shinkansen Osaka-Kyoto
+3	Flight back
+`, { startDate: "2026-08-12" });
+
+  const plan = buildHotelTimelinePlan(result.days);
+  assert.equal(plan.length, 4); // arrival, hotel1, hotel2(shifted), departure
+  assert.equal(plan[0].isBoundary, true);
+  assert.equal(plan[0].kind, "arrival");
+  assert.equal(plan[0].rowIndex, 0);
+  assert.equal(plan[0].tag, "@ArrivalInJapan");
+  assert.equal(plan[1].hotelRowIndex, 1);
+  assert.equal(plan[2].hotelRowIndex, 3); // hotel1's own transfer-after takes rows 1-2, so hotel2 lands on row 3
+  const last = plan[plan.length - 1];
+  assert.equal(last.isBoundary, true);
+  assert.equal(last.kind, "departure");
+  assert.equal(last.tag, "@DepartureDay");
+
+  const withoutArrival = buildHotelTimelinePlan(result.days, { includeArrival: false });
+  assert.equal(withoutArrival[0].isBoundary, undefined);
+  assert.equal(withoutArrival[0].hotelRowIndex, 0);
+  assert.equal(withoutArrival[withoutArrival.length - 1].kind, "departure");
+
+  const withNeither = buildHotelTimelinePlan(result.days, { includeArrival: false, includeDeparture: false });
+  assert.equal(withNeither.every((item) => !item.isBoundary), true);
 });

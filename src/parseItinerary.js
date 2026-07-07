@@ -144,12 +144,18 @@ function parseHeading(line, fallbackYear) {
   return days;
 }
 
+function isOptedOut(value) {
+  return /^(no|false|off|skip|none)$/i.test(value.trim());
+}
+
 function parseItinerary(text) {
   const result = {
     clientName: "",
     tripTitle: "",
     startDate: "",
     endDate: "",
+    includeArrival: true,
+    includeDeparture: true,
     summaryNotes: [],
     days: []
   };
@@ -162,7 +168,7 @@ function parseItinerary(text) {
     const line = rawLine.trim();
     if (!line) continue;
 
-    const topLevel = line.match(/^(client|traveler|traveller|guest|trip|title|start|start date|end|end date)\s*:\s*(.+)$/i);
+    const topLevel = line.match(/^(client|traveler|traveller|guest|trip|title|start|start date|end|end date|arrival|departure)\s*:\s*(.+)$/i);
     if (topLevel && !currentDayGroup) {
       const key = topLevel[1].toLowerCase();
       const value = topLevel[2].trim();
@@ -173,6 +179,8 @@ function parseItinerary(text) {
         fallbackYear = result.startDate.match(/^(\d{4})-/)?.[1] || fallbackYear;
       }
       if (["end", "end date"].includes(key)) result.endDate = normalizeDate(value, fallbackYear);
+      if (key === "arrival" && isOptedOut(value)) result.includeArrival = false;
+      if (key === "departure" && isOptedOut(value)) result.includeDeparture = false;
       continue;
     }
 

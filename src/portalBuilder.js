@@ -527,14 +527,19 @@ async function rowWasAdded(page, targetSpec, beforeCount, requiredIndex) {
   return beforeCount == null ? false : afterCount > beforeCount;
 }
 
-function buildHotelTimelinePlan(days) {
+const ARRIVAL_TAG = "@ArrivalInJapan";
+const DEPARTURE_TAG = "@DepartureDay";
+
+function buildHotelTimelinePlan(days, options = {}) {
   const stays = getHotelStays(days);
   ensureTransferAfterForStays(stays);
+  const includeArrival = options.includeArrival !== false;
+  const includeDeparture = options.includeDeparture !== false;
 
-  let cellIndex = 0;
-  return stays.map((stay, stayIndex) => {
+  let cellIndex = includeArrival && stays.length ? 1 : 0;
+  const plan = stays.map((stay, stayIndex) => {
     const transferTag = getTransferMention(stay.firstDay);
-    const plan = {
+    const item = {
       stay,
       stayIndex,
       hotelRowIndex: cellIndex,
@@ -544,8 +549,19 @@ function buildHotelTimelinePlan(days) {
       transferTag
     };
     cellIndex += transferTag ? 2 : 1;
-    return plan;
+    return item;
   });
+
+  if (stays.length) {
+    if (includeDeparture) {
+      plan.push({ isBoundary: true, kind: "departure", rowIndex: cellIndex, tag: DEPARTURE_TAG });
+    }
+    if (includeArrival) {
+      plan.unshift({ isBoundary: true, kind: "arrival", rowIndex: 0, tag: ARRIVAL_TAG });
+    }
+  }
+
+  return plan;
 }
 
 async function clickTableColumnAtRow(page, rowSpec, rowIndex, columnSpec, label) {
@@ -712,19 +728,98 @@ function hotelEndDateForStay(stay) {
 
 async function fillHotelDateSelection(page, hotelDatesConfig, itinerary) {
   if (!hotelDatesConfig || !itinerary.days?.length) return;
-  let timelinePlan = buildHotelTimelinePlan(itinerary.days);
-  if (process.env.SAFARI_BOT_DEBUG_ONE_HOTEL) timelinePlan = timelinePlan.slice(0, 1);
+  let timelinePlan = buildHotelTimelinePlan(itinerary.days, {
+    includeArrival: itinerary.includeArrival !== false,
+    includeDeparture: itinerary.includeDeparture !== false
+  });
+  if (process.env.SAFARI_BOT_DEBUG_ONE_HOTEL) timelinePlan = timelinePlan.slice(0, 2);
   if (!timelinePlan.length) return;
 
-  console.warn(`[portalBuilder] Hotel timeline plan: ${timelinePlan.map((item) => `hotel${item.stayIndex + 1}@${item.hotelRowIndex}${item.transferRowIndex == null ? "" : ` transfer@${item.transferRowIndex}`}`).join(", ")}`);
+  console.warn(`[portalBuilder] Hotel timeline plan: ${timelinePlan.map(describeTimelineItem).join(", ")}`);
   for (const item of timelinePlan) {
     try {
-      await fillHotelStay(page, hotelDatesConfig, item.stay, item.stayIndex, item.hotelRowIndex);
+      if (item.isBoundary) {
+        await fillBoundaryRow(page, hotelDatesConfig, item, itinerary);
+      } else {
+        await fillHotelStay(page, hotelDatesConfig, item.stay, item.stayIndex, item.hotelRowIndex);
+      }
     } catch (error) {
-      console.warn(`[portalBuilder] Hotel ${item.stayIndex + 1} failed, continuing with remaining rows: ${error.message}`);
-      await saveDebugSnapshot(page, `hotel-${item.stayIndex + 1}-failed`);
+      const label = item.isBoundary ? item.kind : `Hotel ${item.stayIndex + 1}`;
+      console.warn(`[portalBuilder] ${label} failed, continuing with remaining rows: ${error.message}`);
+      await saveDebugSnapshot(page, item.isBoundary ? `${item.kind}-failed` : `hotel-${item.stayIndex + 1}-failed`);
     }
   }
+}
+
+function describeTimelineItem(item) {
+  if (item.isBoundary) return `${item.kind}@${item.rowIndex}`;
+  return `hotel${item.stayIndex + 1}@${item.hotelRowIndex}${item.transferRowIndex == null ? "" : ` transfer@${item.transferRowIndex}`}`;
+}
+
+// Arrival/departure are transfer-only rows at the very start/end of the
+// timeline. Arrival reuses the same index-based logic as transfers between
+// hotels (row 0 is reliable). Departure cannot trust any precomputed index,
+// though - earlier hotel rows can silently drift past an unused template
+// placeholder, so a computed "last row" number can be wrong by the time we
+// get there. Instead, force-add one more row and operate purely on "last
+// matching element" selectors, with no numeric position involved at all.
+async function fillBoundaryRow(page, hotelDatesConfig, item, itinerary) {
+  if (item.kind === "arrival") {
+    return fillTransferRow(page, hotelDatesConfig, item.rowIndex, item.tag, itinerary.startDate, item.kind);
+  }
+  return fillLastTransferRow(page, hotelDatesConfig, item.tag, itinerary.endDate, item.kind);
+}
+
+// Opens and fills whatever the newest ("last") transfer-only row is, without
+// relying on any numeric row index. Used for departure, where a precomputed
+// index can't be trusted.
+async function fillLastTransferRow(page, hotelDatesConfig, transferMention, transferDate, label) {
+  await clickTimelineAddButton(page, hotelDatesConfig.timelineAddButton, `${label} row`);
+  await page.waitForTimeout(700);
+
+  const lastTransferBox = { ...hotelDatesConfig.transferBox, nth: undefined, last: true };
+  const lastTransferSquare = hotelDatesConfig.transferSquare
+    ? { ...hotelDatesConfig.transferSquare, nth: undefined, last: true }
+    : null;
+
+  let opened = await clickSpec(page, lastTransferBox, `${label} box (last)`);
+  if (!opened && lastTransferSquare) {
+    opened = await clickSpec(page, lastTransferSquare, `${label} square (last)`);
+  }
+  if (!opened) {
+    await saveDebugSnapshot(page, `${label}-open-failed`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
+    console.warn(`Warning: could not open ${label} row.`);
+    return false;
+  }
+
+  await page.waitForTimeout(500);
+  const selected = await clickTransferActivityOption(page, hotelDatesConfig, `${label} option`);
+  if (!selected) {
+    await saveDebugSnapshot(page, `${label}-activity-not-found`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
+    console.warn(`Warning: ${label} activity did not resolve or could not be clicked.`);
+    return false;
+  }
+
+  if (transferDate && hotelDatesConfig.transferCalendarTrigger) {
+    const lastTriggerConfig = {
+      ...hotelDatesConfig,
+      transferCalendarTrigger: { ...hotelDatesConfig.transferCalendarTrigger, nth: undefined, last: true }
+    };
+    const dated = await fillTransferActivityDate(page, lastTriggerConfig, transferDate, 0);
+    if (!dated) {
+      console.warn(`Warning: ${label} date could not be selected.`);
+    }
+  }
+
+  if (transferMention && hotelDatesConfig.transferName) {
+    const transferScope = await locatorFromSpec(page, lastTransferBox);
+    const filled = await fillDraftEditorMention(page, hotelDatesConfig.transferName, transferMention, `${label} name`, transferScope, hotelDatesConfig.transferName);
+    if (!filled) {
+      console.warn(`Warning: ${label} name did not resolve or could not be filled.`);
+    }
+  }
+
+  return true;
 }
 
 async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex) {
@@ -930,119 +1025,137 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
 
       if (!filled) {
         console.warn("Warning: hotelDates.hotelName did not resolve or could not be filled.");
-      } else if (hotelDatesConfig.hotelAddButton) {
-        const clicked = await clickSpec(page, hotelDatesConfig.hotelAddButton, "hotel add button");
-        if (!clicked) {
-          console.warn("Warning: hotelDates.hotelAddButton did not resolve or could not be clicked.");
+      } else {
+        if (!accommodationOptions) {
+          // The multi-option path already dismisses these per option; a plain
+          // single-hotel mention can trigger the same "which room(s)?" and
+          // "include the area page?" prompts, and left open they block every
+          // click after them (including the departure row's type-picker).
+          await selectRoomsIfPrompted(page, firstHotel.rooms, label);
+          await confirmAreaPageIfPrompted(page, label);
+        }
+        if (hotelDatesConfig.hotelAddButton) {
+          const clicked = await clickSpec(page, hotelDatesConfig.hotelAddButton, "hotel add button");
+          if (!clicked) {
+            console.warn("Warning: hotelDates.hotelAddButton did not resolve or could not be clicked.");
+          }
         }
       }
     }
   }
 
   if (hotelDatesConfig.transferBox && hotelDatesConfig.transferActivity && firstHotel.transferAfter?.tag) {
-    await page.waitForTimeout(300);
     const transferColumnIndex = cellIndex + 1;
-    await ensureIndexedTarget(
-      page,
-      hotelDatesConfig.transferCell || hotelDatesConfig.transferBox,
-      transferColumnIndex,
-      hotelDatesConfig.timelineAddButton,
-      `transfer ${stayIndex + 1} row`
-    );
-    let transferBoxSpec = specWithIndex(hotelDatesConfig.transferBox, transferColumnIndex);
-    if (hotelDatesConfig.debugTransfers) {
-      await saveDebugSnapshot(page, `transfer-${stayIndex + 1}-before-open`);
-    }
-    const transferOpenAttempts = [
-      {
-        label: "closest square by row",
-        run: () => clickClosestSpecToReferenceY(
-          page,
-          specForTableCell(hotelDatesConfig.transferCell, transferColumnIndex),
-          hotelDatesConfig.transferSquare,
-          `transfer activity closest square ${stayIndex + 1}`
-        )
-      },
-      {
-        label: "square in row",
-        run: () => clickNestedSpecCenter(page, hotelDatesConfig.transferBox, transferColumnIndex, hotelDatesConfig.transferSquare, `transfer activity square ${stayIndex + 1}`)
-      },
-      {
-        label: "cell center",
-        run: () => clickSpecCenter(page, specForTableCell(hotelDatesConfig.transferCell, transferColumnIndex), `transfer activity cell center ${stayIndex + 1}`)
-      },
-      {
-        label: "cell offset",
-        run: () => clickSpec(page, specForTableCell(hotelDatesConfig.transferCell, transferColumnIndex), `transfer activity cell ${stayIndex + 1}`)
-      },
-      {
-        label: "column geometry",
-        run: () => clickTableColumnAtRow(page, hotelDatesConfig.transferBox, transferColumnIndex, hotelDatesConfig.transferColumn, `transfer activity column ${stayIndex + 1}`)
-      },
-      {
-        label: "menu icon",
-        run: () => clickSpec(page, specWithIndex(hotelDatesConfig.transferMenuIcon, transferColumnIndex), `transfer activity menu icon ${stayIndex + 1}`)
-      },
-      {
-        label: "box",
-        run: () => clickSpec(page, transferBoxSpec, `transfer activity box ${stayIndex + 1}`)
-      },
-      {
-        label: "box fallback",
-        run: () => {
-          transferBoxSpec = specWithIndex(hotelDatesConfig.transferBoxFallback, transferColumnIndex);
-          return clickSpec(page, transferBoxSpec, `transfer activity box fallback ${stayIndex + 1}`);
-        }
-      }
-    ];
-
-    let selected = false;
-    for (const attempt of transferOpenAttempts) {
-      console.warn(`[portalBuilder] Trying transfer ${stayIndex + 1} opener: ${attempt.label}`);
-      const opened = await attempt.run();
-      if (!opened) continue;
-      await page.waitForTimeout(500);
-      if (hotelDatesConfig.debugTransfers) {
-        await saveDebugSnapshot(page, `transfer-${stayIndex + 1}-after-${attempt.label.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`);
-      }
-      selected = await clickTransferActivityOption(page, hotelDatesConfig, `transfer activity option ${attempt.label} ${stayIndex + 1}`);
-      if (selected) break;
-    }
-
-    const transferScope = await locatorFromSpec(page, transferBoxSpec);
-    if (!selected) {
-      await saveDebugSnapshot(page, `transfer-${stayIndex + 1}-activity-not-found`);
-      console.warn("Warning: hotelDates.transferActivity did not resolve or could not be clicked.");
-      return { filledTransfer: true };
-    }
-
-    const transferDate = transferDateForStay(stay);
-    if (transferDate) {
-      const dated = await fillTransferActivityDate(page, hotelDatesConfig, transferDate, transferColumnIndex);
-      if (!dated) {
-        console.warn("Warning: transfer activity date could not be selected.");
-      }
-    }
-
     const transferMention = getTransferMention(firstHotel);
-    if (transferMention && hotelDatesConfig.transferName) {
-      const filled = await fillDraftEditorMention(
-        page,
-        hotelDatesConfig.transferName,
-        transferMention,
-        `transfer activity name ${stayIndex + 1}`,
-        transferScope,
-        specWithIndex(hotelDatesConfig.transferName, transferColumnIndex)
-      );
-      if (!filled) {
-        console.warn("Warning: hotelDates.transferName did not resolve or could not be filled.");
-      }
-    }
-
+    const transferDate = transferDateForStay(stay);
+    await fillTransferRow(page, hotelDatesConfig, transferColumnIndex, transferMention, transferDate, `transfer activity ${stayIndex + 1}`);
     return { filledTransfer: true };
   }
 
   return { filledTransfer: false };
+}
+
+// Opens and fills a transfer-only row (no accommodation) in the hotel
+// timeline: transfers between hotel stays, and the arrival/departure boundary
+// rows, both go through this same logic.
+async function fillTransferRow(page, hotelDatesConfig, transferColumnIndex, transferMention, transferDate, label) {
+  await page.waitForTimeout(300);
+  await ensureIndexedTarget(
+    page,
+    hotelDatesConfig.transferCell || hotelDatesConfig.transferBox,
+    transferColumnIndex,
+    hotelDatesConfig.timelineAddButton,
+    `${label} row`
+  );
+  let transferBoxSpec = specWithIndex(hotelDatesConfig.transferBox, transferColumnIndex);
+  if (hotelDatesConfig.debugTransfers) {
+    await saveDebugSnapshot(page, `${label}-before-open`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
+  }
+  const transferOpenAttempts = [
+    {
+      label: "closest square by row",
+      run: () => clickClosestSpecToReferenceY(
+        page,
+        specForTableCell(hotelDatesConfig.transferCell, transferColumnIndex),
+        hotelDatesConfig.transferSquare,
+        `${label} closest square`
+      )
+    },
+    {
+      label: "square in row",
+      run: () => clickNestedSpecCenter(page, hotelDatesConfig.transferBox, transferColumnIndex, hotelDatesConfig.transferSquare, `${label} square`)
+    },
+    {
+      label: "cell center",
+      run: () => clickSpecCenter(page, specForTableCell(hotelDatesConfig.transferCell, transferColumnIndex), `${label} cell center`)
+    },
+    {
+      label: "cell offset",
+      run: () => clickSpec(page, specForTableCell(hotelDatesConfig.transferCell, transferColumnIndex), `${label} cell`)
+    },
+    {
+      label: "column geometry",
+      run: () => clickTableColumnAtRow(page, hotelDatesConfig.transferBox, transferColumnIndex, hotelDatesConfig.transferColumn, `${label} column`)
+    },
+    {
+      label: "menu icon",
+      run: () => clickSpec(page, specWithIndex(hotelDatesConfig.transferMenuIcon, transferColumnIndex), `${label} menu icon`)
+    },
+    {
+      label: "box",
+      run: () => clickSpec(page, transferBoxSpec, `${label} box`)
+    },
+    {
+      label: "box fallback",
+      run: () => {
+        transferBoxSpec = specWithIndex(hotelDatesConfig.transferBoxFallback, transferColumnIndex);
+        return clickSpec(page, transferBoxSpec, `${label} box fallback`);
+      }
+    }
+  ];
+
+  let selected = false;
+  for (const attempt of transferOpenAttempts) {
+    console.warn(`[portalBuilder] Trying ${label} opener: ${attempt.label}`);
+    const opened = await attempt.run();
+    if (!opened) continue;
+    await page.waitForTimeout(500);
+    if (hotelDatesConfig.debugTransfers) {
+      await saveDebugSnapshot(page, `${label}-after-${attempt.label}`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
+    }
+    selected = await clickTransferActivityOption(page, hotelDatesConfig, `${label} option ${attempt.label}`);
+    if (selected) break;
+  }
+
+  const transferScope = await locatorFromSpec(page, transferBoxSpec);
+  if (!selected) {
+    await saveDebugSnapshot(page, `${label}-activity-not-found`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
+    console.warn(`Warning: ${label} activity did not resolve or could not be clicked.`);
+    return false;
+  }
+
+  if (transferDate) {
+    const dated = await fillTransferActivityDate(page, hotelDatesConfig, transferDate, transferColumnIndex);
+    if (!dated) {
+      console.warn(`Warning: ${label} date could not be selected.`);
+    }
+  }
+
+  if (transferMention && hotelDatesConfig.transferName) {
+    const filled = await fillDraftEditorMention(
+      page,
+      hotelDatesConfig.transferName,
+      transferMention,
+      `${label} name`,
+      transferScope,
+      specWithIndex(hotelDatesConfig.transferName, transferColumnIndex)
+    );
+    if (!filled) {
+      console.warn(`Warning: ${label} name did not resolve or could not be filled.`);
+    }
+  }
+
+  return true;
 }
 
 async function fillTransferActivityDate(page, hotelDatesConfig, dateValue, stayIndex) {
@@ -1091,6 +1204,61 @@ async function selectCalendarDate(page, hotelDatesConfig, dateValue, label) {
   return clickCalendarDate(page, hotelDatesConfig, dateValue);
 }
 
+// The mention autocomplete ranks suggestions by its own fuzzy-match rules, not
+// exact equality - typing "@DepartureDay" can surface an unrelated entry
+// (e.g. a longer demo/library item that happens to start with the same text)
+// ahead of the exact match. Before falling back to blind ArrowDown+Enter,
+// look for a suggestion entry whose text is an exact match (ignoring a
+// leading "@") and click it directly.
+async function selectExactMentionSuggestion(page, exactValue) {
+  const target = exactValue.replace(/^@/, "").trim().toLowerCase();
+  if (!target) return false;
+
+  const candidateSelectors = [
+    "[role='option']",
+    "div[class*='mentionSuggestions'] div[class*='mentionSuggestionsEntry']",
+    "div[class*='Suggestion'] li",
+    "div[class*='Suggestion'] [class*='option'], div[class*='Suggestion'] [class*='Option']",
+    "ul[class*='uggestion'] li"
+  ];
+
+  const debugMention = process.env.SAFARI_BOT_DEBUG_MENTION;
+
+  for (const selector of candidateSelectors) {
+    let items;
+    let count = 0;
+    try {
+      items = page.locator(selector);
+      count = await items.count();
+    } catch (_) {
+      continue;
+    }
+    if (debugMention) console.warn(`[portalBuilder][debug-mention] selector "${selector}" matched ${count} element(s)`);
+    if (!count) continue;
+
+    for (let i = 0; i < count; i += 1) {
+      const item = items.nth(i);
+      let text = "";
+      try {
+        text = (await item.innerText()).trim();
+      } catch (_) {
+        continue;
+      }
+      if (debugMention) console.warn(`[portalBuilder][debug-mention]   [${i}] "${text}"`);
+      const normalized = text.replace(/^@/, "").trim().toLowerCase();
+      if (normalized === target) {
+        try {
+          await item.click({ timeout: 1000 });
+          return true;
+        } catch (_) {
+          continue;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 async function fillDraftEditorMention(page, spec, value, label, scope = page, fallbackSpec = null) {
   let locator = await locatorFromSpec(scope || page, spec);
   if (locator && (await locator.count()) === 0) locator = null;
@@ -1113,11 +1281,17 @@ async function fillDraftEditorMention(page, spec, value, label, scope = page, fa
     await placeCaretAtEnd(locator);
     await page.keyboard.type(value, { delay: 35 });
     await page.waitForTimeout(spec.commitDelayMs || 1000);
-    if (spec.arrowDownBeforeEnter) {
-      await page.keyboard.press("ArrowDown");
-      await page.waitForTimeout(150);
+    if (process.env.SAFARI_BOT_DEBUG_MENTION) {
+      await saveDebugSnapshot(page, `mention-popup-${label}`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
     }
-    await page.keyboard.press("Enter");
+    const exactPicked = spec.exactMatch === false ? false : await selectExactMentionSuggestion(page, value);
+    if (!exactPicked) {
+      if (spec.arrowDownBeforeEnter) {
+        await page.keyboard.press("ArrowDown");
+        await page.waitForTimeout(150);
+      }
+      await page.keyboard.press("Enter");
+    }
     await page.waitForTimeout(300);
     return true;
   } catch (error) {
@@ -1172,11 +1346,14 @@ async function fillHotelNameOptions(page, spec, options, label, scope = page, fa
       const prefix = index === 0 ? "" : " ";
       await typeAtEnd(`${prefix}${mention}`);
       await page.waitForTimeout(spec.commitDelayMs || 1000);
-      if (spec.arrowDownBeforeEnter) {
-        await page.keyboard.press("ArrowDown");
-        await page.waitForTimeout(150);
+      const exactPicked = spec.exactMatch === false ? false : await selectExactMentionSuggestion(page, mention);
+      if (!exactPicked) {
+        if (spec.arrowDownBeforeEnter) {
+          await page.keyboard.press("ArrowDown");
+          await page.waitForTimeout(150);
+        }
+        await page.keyboard.press("Enter");
       }
-      await page.keyboard.press("Enter");
       await page.waitForTimeout(300);
 
       if (options.length > 1) {

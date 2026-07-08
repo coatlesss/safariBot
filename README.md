@@ -59,14 +59,19 @@ Use `Trip starts` to assign dates automatically. For example, if `Trip starts` i
 
 Use the customer fields above the itinerary text for draft metadata: last name, B2C/B2B, and agency name for B2B bookings. These values are included in the parsed JSON and can be mapped to Safari Portal fields later.
 
+In the `Build Itinerary` tab, each stay can have more than one hotel option: use `+ Add alternate hotel` to add backup choices (with optional room notes) alongside the primary pick, so the draft builder can try each one in order on Safari Portal.
+
+If a hotel name can't be matched against `data/pages_property.csv`, a `+ New Property Page` button appears in the top bar as a shortcut to Safari Portal's "add property" page (set by `newPropertyPageUrl` in `config/portal.json`).
+
 ## Data Files
 
 Editable CSV data lives in `data/`:
 
 - `data/pages_area.csv` powers the area/RI dropdowns.
 - `data/pages_property.csv` powers automatic hotel/property matching.
+- `data/pages_transfer.csv` powers transfer segment matching between areas.
 
-Replace those files with fresh Safari Portal exports using the same filenames, then click `Reload` or wait for the app to auto-refresh.
+Use the `Manage Data` button in the app to upload a fresh CSV export for any of the three datasets. Uploads are merged, not replaced: rows are matched by name (or by From/To Area + Segment for transfers), matching rows have their non-blank fields refreshed, new rows are appended, and anything missing from the upload is left untouched. You can still replace a file on disk directly with the same filename and click `Reload` instead.
 
 ## Desktop App
 

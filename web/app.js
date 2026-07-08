@@ -28,6 +28,7 @@ const generateItineraryButton = document.querySelector("#generateItineraryButton
 const manageDataButton = document.querySelector("#manageDataButton");
 const closeDataModalButton = document.querySelector("#closeDataModalButton");
 const dataModalOverlay = document.querySelector("#dataModalOverlay");
+const newPropertyPageButton = document.querySelector("#newPropertyPageButton");
 
 let areasCache = [];
 let propertiesCache = [];
@@ -67,6 +68,7 @@ addStayButton.addEventListener("click", () => {
   renderStayRows();
 });
 generateItineraryButton.addEventListener("click", generateItinerary);
+newPropertyPageButton.addEventListener("click", openNewPropertyPage);
 renderStayRows();
 
 manageDataButton.addEventListener("click", () => dataModalOverlay.classList.remove("hidden"));
@@ -444,6 +446,19 @@ async function closeDraftBrowsers() {
   }
 }
 
+async function openNewPropertyPage() {
+  setBusy(true);
+  setMessage("Opening the new property page in your logged-in Safari Portal session...");
+  try {
+    await request("/api/open-new-property-page", {});
+    setMessage("New property page opened. Close it (or use Close Draft Browser) when you're done.");
+  } catch (error) {
+    setMessage(error.message, true);
+  } finally {
+    setBusy(false);
+  }
+}
+
 async function copyJson() {
   if (!parsedItinerary) {
     setMessage("Parse an itinerary first.", true);
@@ -463,6 +478,7 @@ async function refreshStatus() {
     configStatus.className = `pill ${status.hasConfig ? "ok" : "warn"}`;
     sessionStatus.textContent = status.hasLoginSession ? "Logged in" : "Login needed";
     sessionStatus.className = `pill ${status.hasLoginSession ? "ok" : "warn"}`;
+    if (status.newPropertyPageUrl) newPropertyPageButton.classList.remove("hidden");
   } catch {
     configStatus.textContent = "Status unavailable";
     sessionStatus.textContent = "Status unavailable";
@@ -554,7 +570,7 @@ async function request(url, body) {
 }
 
 function setBusy(isBusy) {
-  for (const button of [parseButton, templateButton, sampleButton, clearButton, copyJsonButton, loginButton, buildButton, closeDraftsButton]) {
+  for (const button of [parseButton, templateButton, sampleButton, clearButton, copyJsonButton, loginButton, buildButton, closeDraftsButton, newPropertyPageButton]) {
     button.disabled = isBusy;
   }
 }

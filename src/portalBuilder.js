@@ -405,6 +405,37 @@ function ensureTransferAfterForStays(stays) {
   }
 }
 
+// The raw "Day N" heading for the next stay is often written as the day
+// after checkout (e.g. "Day 1-2: Aug 12" then "Day 3-4: Aug 14" for the next
+// hotel), but the transfer itself is dated the checkout day (Aug 13 here) -
+// arriving at the next hotel happens the same day as the transfer, not the
+// day after. Shift each stay's start (and end, to preserve its night count)
+// to line up with the previous stay's transfer/checkout date.
+function alignStayStartDatesToTransfers(stays) {
+  for (let index = 1; index < stays.length; index += 1) {
+    const previousStay = stays[index - 1];
+    const stay = stays[index];
+    if (!previousStay.firstDay?.transferAfter?.tag) continue;
+
+    const transferDate = transferDateForStay(previousStay);
+    if (!transferDate || !stay.startDate || transferDate === stay.startDate) continue;
+
+    const delta = dayDiff(stay.startDate, transferDate);
+    if (!delta) continue;
+    stay.startDate = transferDate;
+    if (stay.endDate) stay.endDate = addDays(stay.endDate, delta);
+  }
+}
+
+function dayDiff(fromDate, toDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fromDate) || !/^\d{4}-\d{2}-\d{2}$/.test(toDate)) return 0;
+  const [fy, fm, fd] = fromDate.split("-").map(Number);
+  const [ty, tm, td] = toDate.split("-").map(Number);
+  const fromUTC = Date.UTC(fy, fm - 1, fd);
+  const toUTC = Date.UTC(ty, tm - 1, td);
+  return Math.round((toUTC - fromUTC) / 86400000);
+}
+
 function routeAreaForStay(stay) {
   const firstDay = stay?.firstDay || {};
   return String(firstDay.areaName || firstDay.location || "").trim();
@@ -533,6 +564,7 @@ const DEPARTURE_TAG = "@DepartureDay";
 function buildHotelTimelinePlan(days, options = {}) {
   const stays = getHotelStays(days);
   ensureTransferAfterForStays(stays);
+  alignStayStartDatesToTransfers(stays);
   const includeArrival = options.includeArrival !== false;
   const includeDeparture = options.includeDeparture !== false;
 
@@ -813,7 +845,12 @@ async function fillLastTransferRow(page, hotelDatesConfig, transferMention, tran
 
   if (transferMention && hotelDatesConfig.transferName) {
     const transferScope = await locatorFromSpec(page, lastTransferBox);
-    const filled = await fillDraftEditorMention(page, hotelDatesConfig.transferName, transferMention, `${label} name`, transferScope, hotelDatesConfig.transferName);
+    // Departure's exact tag (e.g. "@DepartureDay") is often the first/only
+    // real suggestion; pressing ArrowDown here skips past it onto an
+    // unrelated entry (e.g. a longer demo/library item with a similar
+    // prefix), so commit directly on Enter instead.
+    const nameSpec = { ...hotelDatesConfig.transferName, arrowDownBeforeEnter: false };
+    const filled = await fillDraftEditorMention(page, nameSpec, transferMention, `${label} name`, transferScope, nameSpec);
     if (!filled) {
       console.warn(`Warning: ${label} name did not resolve or could not be filled.`);
     }
@@ -1025,21 +1062,13 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
 
       if (!filled) {
         console.warn("Warning: hotelDates.hotelName did not resolve or could not be filled.");
-      } else {
-        if (!accommodationOptions) {
-          // The multi-option path already dismisses these per option; a plain
-          // single-hotel mention can trigger the same "which room(s)?" and
-          // "include the area page?" prompts, and left open they block every
-          // click after them (including the departure row's type-picker).
-          await selectRoomsIfPrompted(page, firstHotel.rooms, label);
-          await confirmAreaPageIfPrompted(page, label);
-        }
-        if (hotelDatesConfig.hotelAddButton) {
-          const clicked = await clickSpec(page, hotelDatesConfig.hotelAddButton, "hotel add button");
-          if (!clicked) {
-            console.warn("Warning: hotelDates.hotelAddButton did not resolve or could not be clicked.");
-          }
-        }
+      } else if (!accommodationOptions) {
+        // The multi-option path already dismisses these per option; a plain
+        // single-hotel mention can trigger the same "which room(s)?" and
+        // "include the area page?" prompts, and left open they block every
+        // click after them (including a later transfer row's type-picker).
+        await selectRoomsIfPrompted(page, firstHotel.rooms, label);
+        await confirmAreaPageIfPrompted(page, label);
       }
     }
   }
@@ -1340,6 +1369,9 @@ async function fillHotelNameOptions(page, spec, options, label, scope = page, fa
       await page.keyboard.type(text, { delay: 35 });
     }
 
+    const debugMulti = process.env.SAFARI_BOT_DEBUG_MULTIOPTION;
+    if (debugMulti) await saveDebugSnapshot(page, `multioption-${label}-before-loop`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
+
     for (let index = 0; index < options.length; index += 1) {
       const option = options[index];
       const mention = option.name.startsWith("@") ? option.name : `@${option.name}`;
@@ -1355,6 +1387,7 @@ async function fillHotelNameOptions(page, spec, options, label, scope = page, fa
         await page.keyboard.press("Enter");
       }
       await page.waitForTimeout(300);
+      if (debugMulti) await saveDebugSnapshot(page, `multioption-${label}-option-${index}-after-enter`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
 
       if (options.length > 1) {
         await typeAtEnd(` [${optionLetter(index)}]`);
@@ -1362,9 +1395,11 @@ async function fillHotelNameOptions(page, spec, options, label, scope = page, fa
       }
 
       await selectRoomsIfPrompted(page, option.rooms, `${label} (${option.name})`);
+      if (debugMulti) await saveDebugSnapshot(page, `multioption-${label}-option-${index}-after-rooms`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
     }
 
     await confirmAreaPageIfPrompted(page, label);
+    if (debugMulti) await saveDebugSnapshot(page, `multioption-${label}-after-area-confirm`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
     return true;
   } catch (error) {
     console.warn(`[portalBuilder] Could not type ${label}: ${error.message}`);
@@ -1587,6 +1622,24 @@ async function buildPortalDraft(config, itinerary, options = {}) {
   }
 }
 
+// Opens a portal URL in a browser signed in with the saved session (same
+// storageState as buildPortalDraft/login), so employees don't have to log in
+// again just to add a reference page. Left open like a draft browser -
+// closeOpenDraftBrowsers() also closes these.
+async function openPortalPage(config, url) {
+  const storagePath = path.resolve(config.storageStatePath);
+  if (!fs.existsSync(storagePath)) {
+    throw new Error(`Login session not found at ${storagePath}. Run npm run login first.`);
+  }
+
+  const browser = await chromium.launch({ headless: false });
+  browser.on("disconnected", () => openDraftBrowsers.delete(browser));
+  const context = await browser.newContext({ storageState: storagePath });
+  const page = await context.newPage();
+  await page.goto(url, { waitUntil: "domcontentloaded" });
+  openDraftBrowsers.add(browser);
+}
+
 async function closeOpenDraftBrowsers() {
   const browsers = [...openDraftBrowsers];
   openDraftBrowsers.clear();
@@ -1602,5 +1655,6 @@ module.exports = {
   buildPortalDraft,
   buildHotelTimelinePlan,
   closeOpenDraftBrowsers,
+  openPortalPage,
   _getDebugLastPage: () => _debugLastPage
 };

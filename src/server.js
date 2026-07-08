@@ -4,7 +4,7 @@ const path = require("path");
 const { parseHotelItinerary, parseItinerary } = require("./parseItinerary");
 const { loadConfig } = require("./config");
 const { login } = require("./session");
-const { buildPortalDraft, closeOpenDraftBrowsers } = require("./portalBuilder");
+const { buildPortalDraft, closeOpenDraftBrowsers, openPortalPage } = require("./portalBuilder");
 
 const DEFAULT_PORT = Number(process.env.PORT || 3131);
 const PUBLIC_DIR = path.resolve(__dirname, "../web");
@@ -140,6 +140,13 @@ function createServer() {
       const itinerary = body.itinerary || parseByMode(bodyText(body), body.mode, parseOptions(body));
       const config = loadConfig("config/portal.json");
       await buildPortalDraft(config, itinerary, { keepOpen: true, submit: Boolean(body.submit) });
+      return sendJson(res, { ok: true });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/open-new-property-page") {
+      const config = loadConfig("config/portal.json");
+      if (!config.newPropertyPageUrl) return sendJson(res, { error: "newPropertyPageUrl is not set in config/portal.json." }, 400);
+      await openPortalPage(config, config.newPropertyPageUrl);
       return sendJson(res, { ok: true });
     }
 
@@ -431,11 +438,19 @@ function parseCsv(text) {
 function getStatus() {
   const configPath = path.resolve("config/portal.json");
   const storagePath = path.resolve(".auth/safari-portal.json");
+  const hasConfig = fs.existsSync(configPath);
+  let newPropertyPageUrl = "";
+  if (hasConfig) {
+    try {
+      newPropertyPageUrl = JSON.parse(fs.readFileSync(configPath, "utf8")).newPropertyPageUrl || "";
+    } catch (_) {}
+  }
   return {
-    hasConfig: fs.existsSync(configPath),
+    hasConfig,
     hasLoginSession: fs.existsSync(storagePath),
     configPath,
-    storagePath
+    storagePath,
+    newPropertyPageUrl
   };
 }
 

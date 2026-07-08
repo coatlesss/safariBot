@@ -1,8 +1,9 @@
 {
   "loginUrl": "https://account.safariportal.app/auth/login",
   "newItineraryUrl": "https://account.safariportal.app/acc/1594060708398499298/itineraries/itinerary/0/general-info?",
+  "newPropertyPageUrl": "https://account.safariportal.app/acc/1594060708398499298/content-library/page/0/details?type=property",
   "storageStatePath": ".auth/safari-portal.json",
-  "headless": true,
+  "headless": false,
   "fields": {
     "fileName": {
       "selector": "input#react-select-2-input"
@@ -96,7 +97,7 @@
     },
     "rowCell": {
       "selector": "div.Table_cell__2O9X5, div[class*='Table_cell']",
-      "cellsPerRow": 3,
+      "cellsPerRow": 4,
       "columnIndex": 0
     },
     "dateColumn": {
@@ -126,7 +127,7 @@
     },
     "transferCell": {
       "selector": "div.Table_cell__2O9X5, div[class*='Table_cell']",
-      "cellsPerRow": 3,
+      "cellsPerRow": 4,
       "columnIndex": 1,
       "x": 40,
       "y": 40

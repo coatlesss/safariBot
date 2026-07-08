@@ -16,6 +16,7 @@
         <div class="status-panel" aria-live="polite">
           <span id="configStatus" class="pill">Config</span>
           <span id="sessionStatus" class="pill">Session</span>
+          <button id="manageDataButton" type="button" class="small">Manage Data</button>
         </div>
       </header>
 
@@ -125,6 +126,50 @@
         </div>
       </section>
     </main>
+
+    <div id="dataModalOverlay" class="modal-overlay hidden">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>Manage Reference Data</h2>
+          <button id="closeDataModalButton" type="button" class="small">Close</button>
+        </div>
+        <p class="modal-hint">
+          Upload a CSV export with the same columns as the dataset it's updating. Rows are matched by
+          name (or From/To Area + Segment for transfers): matching rows get refreshed, new rows are
+          added, and anything not in the upload is left as-is.
+        </p>
+
+        <div class="data-import-row" data-kind="areas">
+          <div class="data-import-label">
+            <strong>Areas</strong>
+            <span class="muted">pages_area.csv</span>
+          </div>
+          <input type="file" accept=".csv" class="data-import-file">
+          <button type="button" class="small data-import-button">Upload &amp; Merge</button>
+          <span class="data-import-result"></span>
+        </div>
+
+        <div class="data-import-row" data-kind="properties">
+          <div class="data-import-label">
+            <strong>Properties</strong>
+            <span class="muted">pages_property.csv</span>
+          </div>
+          <input type="file" accept=".csv" class="data-import-file">
+          <button type="button" class="small data-import-button">Upload &amp; Merge</button>
+          <span class="data-import-result"></span>
+        </div>
+
+        <div class="data-import-row" data-kind="transfers">
+          <div class="data-import-label">
+            <strong>Transfers</strong>
+            <span class="muted">pages_transfer.csv</span>
+          </div>
+          <input type="file" accept=".csv" class="data-import-file">
+          <button type="button" class="small data-import-button">Upload &amp; Merge</button>
+          <span class="data-import-result"></span>
+        </div>
+      </div>
+    </div>
 
     <script src="/app.js"></script>
   </body>

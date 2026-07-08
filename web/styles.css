@@ -641,3 +641,84 @@ textarea {
     max-height: none;
   }
 }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 41, 36, 0.35);
+  padding: 20px;
+}
+
+.modal-box {
+  width: min(640px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h2 {
+  margin: 0;
+}
+
+.modal-hint {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 12px 0 20px;
+}
+
+.data-import-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.data-import-row:first-of-type {
+  border-top: none;
+}
+
+.data-import-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.data-import-label .muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.data-import-file {
+  max-width: 220px;
+  font-size: 13px;
+}
+
+.data-import-result {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.data-import-result.ok {
+  color: var(--ok);
+}
+
+.data-import-result.error {
+  color: var(--bad);
+}

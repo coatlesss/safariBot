@@ -148,6 +148,28 @@ function createServer() {
       return sendJson(res, { ok: true });
     }
 
+    if (req.method === "POST" && url.pathname === "/api/data/import") {
+      const body = await readJson(req);
+      const kind = body.kind;
+      const csvText = typeof body.csvText === "string" ? body.csvText : "";
+      const DATA_KINDS = {
+        areas: { fileName: "pages_area.csv", envVar: "PAGES_CSV" },
+        properties: { fileName: "pages_property.csv", envVar: "PROPERTIES_CSV" },
+        transfers: { fileName: "pages_transfer.csv", envVar: "TRANSFERS_CSV" }
+      };
+      if (!DATA_KINDS[kind]) return sendJson(res, { error: "Unknown data kind." }, 400);
+      if (!csvText.trim()) return sendJson(res, { error: "No CSV content received." }, 400);
+
+      const { fileName, envVar } = DATA_KINDS[kind];
+      const csvPath = dataCsvPath(fileName, process.env[envVar]);
+      const currentRows = fs.existsSync(csvPath) ? parseCsv(fs.readFileSync(csvPath, "utf8")) : [];
+      const newRows = parseCsv(csvText);
+
+      const result = mergeDataSheet(kind, currentRows, newRows);
+      fs.writeFileSync(csvPath, rowsToCsv(result.mergedRows), "utf8");
+      return sendJson(res, { ok: true, updated: result.updated, added: result.added, skipped: result.skipped, total: result.total });
+    }
+
     if (req.method === "GET") {
       return serveStatic(url.pathname, res);
     }
@@ -198,6 +220,130 @@ function dataCsvPath(fileName, overridePath) {
   const localPath = path.resolve(process.cwd(), "data", fileName);
   if (fs.existsSync(localPath)) return localPath;
   return path.resolve(overridePath || path.resolve(process.env.USERPROFILE || process.env.HOME || ".", "Downloads", fileName));
+}
+
+// Merges an uploaded reference sheet (areas/properties/transfers export) into
+// the current data CSV: rows are matched by a dataset-specific key, matching
+// rows get their non-blank fields refreshed (a blank cell in the upload never
+// erases existing data), unmatched keys are appended, and any current row not
+// present in the upload is left untouched - this is a merge, not a replace.
+function mergeDataSheet(kind, currentRows, newRows) {
+  if (kind === "transfers") return mergeTransferSheet(currentRows, newRows);
+  return mergeSimpleSheet(kind === "areas" ? "Area Name" : "Property Name", currentRows, newRows);
+}
+
+function mergeSimpleSheet(keyColumn, currentRows, newRows) {
+  const headerRowIndex = 0;
+  const header = currentRows[headerRowIndex] || newRows[0] || [];
+  const currentRecords = rowsToRecords(currentRows, headerRowIndex);
+  const newRecords = rowsToRecords(newRows, 0);
+
+  const { updated, added, skipped } = applyMerge(currentRecords, newRecords, (record) => {
+    const key = String(record[keyColumn] || "").trim().toLowerCase();
+    return key || null;
+  });
+
+  const mergedRows = [
+    ...currentRows.slice(0, headerRowIndex + 1),
+    ...currentRecords.map((record) => recordToRow(record, header))
+  ];
+  return { mergedRows, updated, added, skipped, total: currentRecords.length };
+}
+
+function mergeTransferSheet(currentRows, newRows) {
+  const headerRowIndex = findTransferHeaderRowIndex(currentRows);
+  if (headerRowIndex < 0) throw new Error("Could not find the 'From Area' header row in the current transfers data.");
+  const newHeaderRowIndex = findTransferHeaderRowIndex(newRows);
+  if (newHeaderRowIndex < 0) throw new Error("Could not find a 'From Area' column header in the uploaded sheet.");
+
+  const header = currentRows[headerRowIndex];
+  const currentRecords = rowsToRecords(currentRows, headerRowIndex);
+  const newRecords = rowsToRecords(newRows, newHeaderRowIndex);
+
+  const transferKey = (record) => {
+    const fromArea = String(record["From Area"] || "").trim().toLowerCase();
+    const toArea = String(record["To Area"] || "").trim().toLowerCase();
+    const segment = String(record["Segment"] || "").trim().toLowerCase();
+    if (!fromArea || !toArea || !segment) return null;
+    return `${fromArea}|${toArea}|${segment}`;
+  };
+
+  const { updated, added, skipped } = applyMerge(currentRecords, newRecords, transferKey);
+
+  const mergedRows = [
+    ...currentRows.slice(0, headerRowIndex + 1),
+    ...currentRecords.map((record) => recordToRow(record, header))
+  ];
+  return { mergedRows, updated, added, skipped, total: currentRecords.length };
+}
+
+// Mutates currentRecords in place: matching keys get filled in with any
+// non-blank new values, new keys are pushed on the end, and null/blank keys
+// are skipped rather than merged (avoids appending junk rows from a sheet
+// with stray blank lines).
+function applyMerge(currentRecords, newRecords, keyFn) {
+  const indexByKey = new Map();
+  currentRecords.forEach((record, index) => {
+    const key = keyFn(record);
+    if (key) indexByKey.set(key, index);
+  });
+
+  let updated = 0;
+  let added = 0;
+  let skipped = 0;
+  for (const newRecord of newRecords) {
+    const key = keyFn(newRecord);
+    if (!key) {
+      skipped += 1;
+      continue;
+    }
+    if (indexByKey.has(key)) {
+      const index = indexByKey.get(key);
+      currentRecords[index] = mergeRecord(currentRecords[index], newRecord);
+      updated += 1;
+    } else {
+      currentRecords.push(newRecord);
+      indexByKey.set(key, currentRecords.length - 1);
+      added += 1;
+    }
+  }
+  return { updated, added, skipped };
+}
+
+function mergeRecord(currentRecord, newRecord) {
+  const merged = { ...currentRecord };
+  for (const [name, value] of Object.entries(newRecord)) {
+    if (String(value || "").trim() !== "") merged[name] = value;
+  }
+  return merged;
+}
+
+function rowsToRecords(rows, headerRowIndex) {
+  const header = rows[headerRowIndex] || [];
+  return rows.slice(headerRowIndex + 1)
+    .filter((row) => row.some((value) => String(value || "").trim() !== ""))
+    .map((row) => {
+      const record = {};
+      header.forEach((col, i) => { record[String(col || "").trim()] = row[i] || ""; });
+      return record;
+    });
+}
+
+function recordToRow(record, header) {
+  return header.map((col) => record[String(col || "").trim()] || "");
+}
+
+function findTransferHeaderRowIndex(rows) {
+  return rows.findIndex((row) => row.some((value) => String(value || "").trim().toLowerCase() === "from area"));
+}
+
+function csvField(value) {
+  const str = String(value ?? "");
+  return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+
+function rowsToCsv(rows) {
+  return rows.map((row) => row.map(csvField).join(",")).join("\r\n") + "\r\n";
 }
 
 function columnIndex(header, columnName, fallback) {

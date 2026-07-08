@@ -25,6 +25,9 @@ const addStayButton = document.querySelector("#addStayButton");
 const returnFlightToggle = document.querySelector("#returnFlightToggle");
 const returnFlightLabelInput = document.querySelector("#returnFlightLabelInput");
 const generateItineraryButton = document.querySelector("#generateItineraryButton");
+const manageDataButton = document.querySelector("#manageDataButton");
+const closeDataModalButton = document.querySelector("#closeDataModalButton");
+const dataModalOverlay = document.querySelector("#dataModalOverlay");
 
 let areasCache = [];
 let propertiesCache = [];
@@ -65,6 +68,19 @@ addStayButton.addEventListener("click", () => {
 });
 generateItineraryButton.addEventListener("click", generateItinerary);
 renderStayRows();
+
+manageDataButton.addEventListener("click", () => dataModalOverlay.classList.remove("hidden"));
+closeDataModalButton.addEventListener("click", () => dataModalOverlay.classList.add("hidden"));
+dataModalOverlay.addEventListener("click", (event) => {
+  if (event.target === dataModalOverlay) dataModalOverlay.classList.add("hidden");
+});
+for (const row of document.querySelectorAll(".data-import-row")) {
+  const kind = row.dataset.kind;
+  const fileInput = row.querySelector(".data-import-file");
+  const button = row.querySelector(".data-import-button");
+  const result = row.querySelector(".data-import-result");
+  button.addEventListener("click", () => importDataSheet(kind, fileInput, result));
+}
 
 refreshStatus();
 updateAgencyControls();
@@ -147,6 +163,31 @@ async function loadTransfers() {
     if (parsedItinerary) renderItinerary(parsedItinerary);
   } catch (err) {
     console.warn("Could not load transfers:", err.message);
+  }
+}
+
+const RELOAD_BY_KIND = { areas: loadAreas, properties: loadProperties, transfers: loadTransfers };
+
+async function importDataSheet(kind, fileInput, resultEl) {
+  const file = fileInput.files?.[0];
+  if (!file) {
+    resultEl.textContent = "Choose a CSV file first.";
+    resultEl.className = "data-import-result error";
+    return;
+  }
+
+  resultEl.textContent = "Uploading...";
+  resultEl.className = "data-import-result";
+  try {
+    const csvText = await file.text();
+    const data = await request("/api/data/import", { kind, csvText });
+    resultEl.textContent = `Updated ${data.updated}, added ${data.added}${data.skipped ? `, skipped ${data.skipped}` : ""} (${data.total} total).`;
+    resultEl.className = "data-import-result ok";
+    fileInput.value = "";
+    await RELOAD_BY_KIND[kind]();
+  } catch (error) {
+    resultEl.textContent = error.message;
+    resultEl.className = "data-import-result error";
   }
 }
 

@@ -51,7 +51,7 @@ Lodge: Tortilis Camp
 Serengeti Safari Camp
 ```
 
-The login button opens a browser. Log in normally, then close that browser window; Safari Bot saves the session when the login window closes.
+The login button opens a browser. Log in normally - once Safari Portal redirects you away from the login page, the browser closes itself and the session saves automatically. You can also close the window manually at any point as a fallback.
 
 Use `Trip starts` to assign dates automatically. For example, if `Trip starts` is `2026-04-10`, then `Day 1` is `2026-04-10`, `Day 2` is `2026-04-11`, and a row like `Day 1-5 Heda-Ito` expands into five placeholder hotel nights.
 
@@ -82,6 +82,15 @@ npm run desktop
 ```
 
 This opens the same UI in its own application window and starts the local backend automatically.
+
+## Installers
+
+Standalone Windows and Mac apps with Chromium bundled in (no separate Playwright install needed on the machine running them):
+
+- **Windows**: `npm run dist` builds an NSIS installer at `dist/Safari Bot Setup <version>.exe`. Unsigned, so Windows SmartScreen will flag it on first run ("More info" -> "Run anyway"). Config and data live in the app's own install folder (typically `%LOCALAPPDATA%\Programs\safari-bot\`).
+- **Mac**: built via the `Build macOS App` GitHub Actions workflow (manual trigger only, since it needs a macOS runner this project can't build on directly) - produces an arm64 `.dmg` as a downloadable artifact. Unsigned, so macOS Gatekeeper will block it on first run (right-click the app -> Open). Config and data live in `~/Library/Application Support/Safari Bot/`.
+
+Both builds bundle whatever `config/portal.json` exists locally at build time (Windows) or is provided via the `PORTAL_JSON` repository secret (Mac CI, since `config/portal.json` is gitignored and this repo is public) and seed it - along with the `data/*.csv` files - into place on first launch, so a fresh install comes pre-configured instead of starting empty.
 
 ## One-time login
 

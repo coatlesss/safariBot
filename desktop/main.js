@@ -24,6 +24,27 @@ let serverHandle = null;
 let mainWindow = null;
 let isQuitting = false;
 
+// data/*.csv ships bundled inside the packaged app (it's checked into the
+// repo), but dataCsvPath() in src/server.js reads from the writable cwd
+// above, not the bundled resources - so a fresh install would otherwise
+// show empty Areas/Properties/Transfers lists until someone used "Manage
+// Data" or copied files in by hand. Seed the writable folder from the
+// bundled copy once, without ever overwriting a file the user already has.
+function seedDefaultData() {
+  if (!app.isPackaged) return;
+  const bundledDataDir = path.resolve(__dirname, "../data");
+  if (!fs.existsSync(bundledDataDir)) return;
+
+  const targetDataDir = path.resolve("data");
+  for (const fileName of fs.readdirSync(bundledDataDir)) {
+    if (!fileName.endsWith(".csv")) continue;
+    const targetPath = path.resolve(targetDataDir, fileName);
+    if (fs.existsSync(targetPath)) continue;
+    fs.mkdirSync(targetDataDir, { recursive: true });
+    fs.copyFileSync(path.resolve(bundledDataDir, fileName), targetPath);
+  }
+}
+
 // Startup failures here would otherwise be a silently-swallowed rejection
 // (app.whenReady().then(createWindow) had no .catch) or an invisible native
 // crash - the app would just vanish with no window and no clue why. Log to
@@ -40,6 +61,7 @@ function logFatal(label, error) {
 }
 
 async function createWindow() {
+  seedDefaultData();
   serverHandle = await startServer({ port: 0, host: "127.0.0.1" });
 
   mainWindow = new BrowserWindow({

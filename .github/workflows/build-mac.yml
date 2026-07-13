@@ -5,7 +5,18 @@ on:
 
 jobs:
   build-mac:
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          # macos-14 runners are Apple Silicon; macos-13 runners are Intel.
+          # Building on each natively (rather than cross-compiling from one)
+          # ensures the bundled Chromium and any native modules match the
+          # architecture they'll actually run on.
+          - os: macos-14
+            arch: arm64
+          - os: macos-13
+            arch: x64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -36,5 +47,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: safari-bot-mac
+          name: safari-bot-mac-${{ matrix.arch }}
           path: dist/*.dmg

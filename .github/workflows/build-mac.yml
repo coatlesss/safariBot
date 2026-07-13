@@ -5,18 +5,10 @@ on:
 
 jobs:
   build-mac:
-    strategy:
-      matrix:
-        include:
-          # macos-14 runners are Apple Silicon; macos-13 runners are Intel.
-          # Building on each natively (rather than cross-compiling from one)
-          # ensures the bundled Chromium and any native modules match the
-          # architecture they'll actually run on.
-          - os: macos-14
-            arch: arm64
-          - os: macos-13
-            arch: x64
-    runs-on: ${{ matrix.os }}
+    # GitHub's Intel (macos-13) hosted runners are effectively unavailable
+    # (jobs sit queued indefinitely) - arm64 covers every Mac sold since
+    # late 2020, which is the practical target now.
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
@@ -47,5 +39,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: safari-bot-mac-${{ matrix.arch }}
+          name: safari-bot-mac-arm64
           path: dist/*.dmg

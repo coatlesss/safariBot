@@ -1,9 +1,43 @@
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, dialog, shell } = require("electron");
+const fs = require("fs");
+const path = require("path");
+
+// A packaged build's cwd is not guaranteed to be a stable, writable place -
+// config/portal.json, data/*.csv, and .auth/ session files need to resolve
+// somewhere that persists across launches. A portable .exe re-extracts to a
+// fresh temp folder every run (electron-builder sets PORTABLE_EXECUTABLE_DIR
+// to the real folder the .exe lives in for exactly this reason); an
+// installed Windows build's process.execPath already points at its real,
+// stable install directory, so anchor cwd there instead. On macOS,
+// process.execPath sits inside the read-only .app bundle (Contents/MacOS/),
+// which isn't writable and isn't where Mac apps are expected to keep data -
+// use the standard per-user app-data directory there instead.
+if (process.env.PORTABLE_EXECUTABLE_DIR) {
+  process.chdir(process.env.PORTABLE_EXECUTABLE_DIR);
+} else if (app.isPackaged) {
+  process.chdir(process.platform === "darwin" ? app.getPath("userData") : path.dirname(process.execPath));
+}
+
 const { closeOpenDraftBrowsers, startServer } = require("../src/server");
 
 let serverHandle = null;
 let mainWindow = null;
 let isQuitting = false;
+
+// Startup failures here would otherwise be a silently-swallowed rejection
+// (app.whenReady().then(createWindow) had no .catch) or an invisible native
+// crash - the app would just vanish with no window and no clue why. Log to
+// a file next to the exe and surface a dialog so failures are never silent.
+function logFatal(label, error) {
+  const message = `[${new Date().toISOString()}] ${label}: ${error?.stack || error}\n`;
+  try {
+    fs.appendFileSync(path.resolve("safari-bot-crash.log"), message);
+  } catch (_) {}
+  console.error(message);
+  try {
+    dialog.showErrorBox("Safari Bot failed to start", `${label}\n\n${error?.message || error}`);
+  } catch (_) {}
+}
 
 async function createWindow() {
   serverHandle = await startServer({ port: 0, host: "127.0.0.1" });
@@ -27,10 +61,17 @@ async function createWindow() {
     return { action: "deny" };
   });
 
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    logFatal("Renderer process gone", new Error(JSON.stringify(details)));
+  });
+
   await mainWindow.loadURL(serverHandle.url);
 }
 
-app.whenReady().then(createWindow);
+process.on("uncaughtException", (error) => logFatal("Uncaught exception", error));
+process.on("unhandledRejection", (error) => logFatal("Unhandled rejection", error));
+
+app.whenReady().then(createWindow).catch((error) => logFatal("Failed during startup", error));
 
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {

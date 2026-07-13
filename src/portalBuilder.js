@@ -363,6 +363,7 @@ function getHotelLocationMention(hotel) {
   const areaTag = compactMentionPart(hotel?.areaTag || "");
   if (areaName && areaTag) return `@${areaName}${areaTag}`;
   if (areaTag) return areaTag.startsWith("@") ? areaTag : `@${areaTag}`;
+  if (areaName) return `@${areaName}`;
   return "";
 }
 
@@ -1024,9 +1025,11 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
   if (hotelDatesConfig.location) {
     const locationMention = getHotelLocationMention(firstHotel);
     if (locationMention) {
+      const hasAreaTag = Boolean(compactMentionPart(firstHotel?.areaTag || ""));
+      const locationSpec = specWithIndex(hotelDatesConfig.location, locationEditorIndex);
       const filled = await fillDraftEditorMention(
         page,
-        specWithIndex(hotelDatesConfig.location, locationEditorIndex),
+        hasAreaTag ? locationSpec : { ...locationSpec, arrowDownBeforeEnter: true },
         locationMention,
         `hotel ${stayIndex + 1} location details`,
         page
@@ -1435,6 +1438,10 @@ async function selectRoomsIfPrompted(page, rooms, label) {
   }
 }
 
+// Declines the "include the area page?" prompt - the location column is
+// already filled with its own area mention (see getHotelLocationMention),
+// so confirming "Yes" here just appends a redundant second area mention
+// straight into the hotel name field.
 async function confirmAreaPageIfPrompted(page, label) {
   const modal = page.locator(".AreaSelect_container__1d4aZ").first();
   try {
@@ -1443,13 +1450,16 @@ async function confirmAreaPageIfPrompted(page, label) {
     return; // no "include the area page?" prompt appeared
   }
 
-  const yesButton = modal.getByRole("button", { name: "Yes", exact: true }).first();
-  if ((await yesButton.count()) > 0) {
-    await yesButton.click();
+  const noButton = modal.getByRole("button", { name: "No", exact: true }).first();
+  if ((await noButton.count()) > 0) {
+    await noButton.click();
     await page.waitForTimeout(600);
-  } else {
-    console.warn(`[portalBuilder] Could not find Yes button on area-page prompt for ${label}.`);
+    return;
   }
+
+  console.warn(`[portalBuilder] Could not find No button on area-page prompt for ${label}, dismissing without confirming.`);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
 }
 
 async function placeCaretAtEnd(locator) {

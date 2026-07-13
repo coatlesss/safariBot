@@ -8,6 +8,7 @@ const { buildPortalDraft, closeOpenDraftBrowsers, openPortalPage } = require("./
 
 const DEFAULT_PORT = Number(process.env.PORT || 3131);
 const PUBLIC_DIR = path.resolve(__dirname, "../web");
+const EXAMPLES_DIR = path.resolve(__dirname, "../examples");
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
@@ -22,11 +23,11 @@ function createServer() {
     const url = new URL(req.url, `http://${req.headers.host}`);
 
     if (req.method === "GET" && url.pathname === "/api/sample") {
-      return sendJson(res, { text: fs.readFileSync(path.resolve("examples/sample-itinerary.txt"), "utf8") });
+      return sendJson(res, { text: fs.readFileSync(path.resolve(EXAMPLES_DIR, "sample-itinerary.txt"), "utf8") });
     }
 
     if (req.method === "GET" && url.pathname === "/api/template") {
-      return sendJson(res, { text: fs.readFileSync(path.resolve("examples/template.txt"), "utf8") });
+      return sendJson(res, { text: fs.readFileSync(path.resolve(EXAMPLES_DIR, "template.txt"), "utf8") });
     }
 
     if (req.method === "GET" && url.pathname === "/api/status") {
@@ -49,10 +50,9 @@ function createServer() {
           const row = rows[i];
           if (!row || row.length < 9) continue;
           const tag = (row[8] || "").trim();
-          if (tag.endsWith("_RI")) {
-            const name = row[0] || row[2] || tag;
-            list.push({ name: name.trim(), tag });
-          }
+          if (tag && !tag.endsWith("_RI")) continue; // skip non-RI variants (e.g. "_Base"), but keep areas with no dedicated RI row at all
+          const name = row[0] || row[2] || tag;
+          list.push({ name: name.trim(), tag });
         }
         return sendJson(res, { areas: list });
       } catch (err) {

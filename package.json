@@ -10,12 +10,47 @@
     "desktop": "node desktop/launch.js",
     "login": "node src/index.js login",
     "parse": "node src/index.js parse",
-    "test": "node --test"
+    "test": "node --test",
+    "dist": "electron-builder --win nsis",
+    "dist:mac": "electron-builder --mac"
   },
   "dependencies": {
     "playwright": "^1.45.0"
   },
   "devDependencies": {
-    "electron": "^43.0.0"
+    "electron": "^43.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.safaribot.app",
+    "productName": "Safari Bot",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "desktop/**/*",
+      "src/**/*",
+      "web/**/*",
+      "config/**/*",
+      "data/**/*",
+      "examples/**/*",
+      "package.json",
+      "!config/portal.json",
+      "!config/portal.debug.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.business",
+      "identity": null
+    }
   }
 }

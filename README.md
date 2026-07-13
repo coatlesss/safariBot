@@ -9,6 +9,17 @@ The first version is intentionally local and supervised:
 - the Safari Portal field/button selectors live in `config/portal.json`
 - actual submission is off unless you pass `--submit`
 
+## Installation
+
+Download the latest build from the [Releases page](https://github.com/coatlesss/safariBot/releases/latest) - no need to clone this repo or install Node/Playwright yourself:
+
+- **Windows**: download `Safari-Bot-Setup-<version>.exe` and run it. It's unsigned, so Windows SmartScreen will warn you the first time - click **More info** -> **Run anyway**. It installs per-user (no admin rights needed) with Start Menu / Desktop shortcuts.
+- **Mac (Apple Silicon)**: download `Safari-Bot-<version>-arm64.dmg`, open it, and drag **Safari Bot** into the **Applications** shortcut shown. It's unsigned, so right-click the app -> **Open** the first time instead of double-clicking (or allow it via System Settings -> Privacy & Security) to get past Gatekeeper.
+
+Both come pre-loaded with `config/portal.json` and the `data/*.csv` reference sheets, so they should work right after install with no extra setup - just launch and go.
+
+If you'd rather run it from source (for development, or to build your own installer), continue with the sections below.
+
 ## Setup
 
 Playwright is already installed in this folder. If you ever need to reinstall dependencies:
@@ -83,9 +94,9 @@ npm run desktop
 
 This opens the same UI in its own application window and starts the local backend automatically.
 
-## Installers
+## Building The Installers
 
-Standalone Windows and Mac apps with Chromium bundled in (no separate Playwright install needed on the machine running them):
+For producing new builds (as opposed to just installing one from the Releases page above). Standalone Windows and Mac apps with Chromium bundled in (no separate Playwright install needed on the machine running them):
 
 - **Windows**: `npm run dist` builds an NSIS installer at `dist/Safari Bot Setup <version>.exe`. Unsigned, so Windows SmartScreen will flag it on first run ("More info" -> "Run anyway"). Config and data live in the app's own install folder (typically `%LOCALAPPDATA%\Programs\safari-bot\`).
 - **Mac**: built via the `Build macOS App` GitHub Actions workflow (manual trigger only, since it needs a macOS runner this project can't build on directly) - produces an arm64 `.dmg` as a downloadable artifact. Unsigned, so macOS Gatekeeper will block it on first run (right-click the app -> Open). Config and data live in `~/Library/Application Support/Safari Bot/`.

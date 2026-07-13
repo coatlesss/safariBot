@@ -11,8 +11,8 @@
     "login": "node src/index.js login",
     "parse": "node src/index.js parse",
     "test": "node --test",
-    "dist": "electron-builder --win nsis",
-    "dist:mac": "electron-builder --mac"
+    "dist": "electron-builder --win nsis --publish never",
+    "dist:mac": "electron-builder --mac --publish never"
   },
   "dependencies": {
     "playwright": "^1.45.0"

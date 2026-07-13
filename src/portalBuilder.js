@@ -586,7 +586,8 @@ function buildHotelTimelinePlan(days, options = {}) {
 
   if (stays.length) {
     if (includeDeparture) {
-      plan.push({ isBoundary: true, kind: "departure", rowIndex: cellIndex, tag: DEPARTURE_TAG });
+      const departureDate = hotelEndDateForStay(stays[stays.length - 1]);
+      plan.push({ isBoundary: true, kind: "departure", rowIndex: cellIndex, tag: DEPARTURE_TAG, date: departureDate });
     }
     if (includeArrival) {
       plan.unshift({ isBoundary: true, kind: "arrival", rowIndex: 0, tag: ARRIVAL_TAG });
@@ -755,7 +756,7 @@ function hotelEndDateForStay(stay) {
   const startDate = stay.startDate || "";
   const endDate = stay.endDate || startDate;
   if (!startDate) return "";
-  return startDate === endDate ? addDays(startDate, 1) : endDate;
+  return addDays(endDate, 1);
 }
 
 async function fillHotelDateSelection(page, hotelDatesConfig, itinerary) {
@@ -799,7 +800,7 @@ async function fillBoundaryRow(page, hotelDatesConfig, item, itinerary) {
   if (item.kind === "arrival") {
     return fillTransferRow(page, hotelDatesConfig, item.rowIndex, item.tag, itinerary.startDate, item.kind);
   }
-  return fillLastTransferRow(page, hotelDatesConfig, item.tag, itinerary.endDate, item.kind);
+  return fillLastTransferRow(page, hotelDatesConfig, item.tag, item.date || itinerary.endDate, item.kind);
 }
 
 // Opens and fills whatever the newest ("last") transfer-only row is, without

@@ -52,25 +52,29 @@ http://localhost:3131
 
 From there you can paste an itinerary, parse it, copy the JSON, open the login browser, and start the draft builder.
 
-The app starts in `Hotels only` mode. In this mode, you can paste a simple hotel list such as:
+Use the customer fields above the itinerary text for draft metadata: last name, B2C/B2B, and agency name for B2B bookings. These values are included in the parsed JSON and can be mapped to Safari Portal fields later.
 
-```text
-Client: Jane Smith
-Trip: Kenya Hotels
-Hotel: Hemingways Nairobi
-Lodge: Tortilis Camp
-Serengeti Safari Camp
-```
+Below that are two tabs for getting itinerary text into the box:
 
-The login button opens a browser. Log in normally - once Safari Portal redirects you away from the login page, the browser closes itself and the session saves automatically. You can also close the window manually at any point as a fallback.
+- **Paste Text** - paste a full itinerary (see [Itinerary Format](#itinerary-format) below), or a simpler hotel list such as:
+
+  ```text
+  Client: Jane Smith
+  Trip: Kenya Hotels
+  Hotel: Hemingways Nairobi
+  Lodge: Tortilis Camp
+  Serengeti Safari Camp
+  ```
+
+  `Load Template` fills in a blank starting point and `Load Sample` fills in a complete worked example, both landing in this tab.
+
+- **Build Itinerary** - a form instead of raw text: set a client name and trip title, then add one row per stay with a location, a night count, and one or more hotel options (use `+ Add alternate hotel` for backup choices, each with optional room notes, so the draft builder can try them in order on Safari Portal). `Generate Itinerary` turns this into itinerary text and switches to the Paste Text tab so you can review it before parsing.
 
 Use `Trip starts` to assign dates automatically. For example, if `Trip starts` is `2026-04-10`, then `Day 1` is `2026-04-10`, `Day 2` is `2026-04-11`, and a row like `Day 1-5 Heda-Ito` expands into five placeholder hotel nights.
 
-`Build Draft` opens Safari Portal with your saved login session and tries to fill the fields listed in `config/portal.json`. Keep this as a supervised step until the real Safari Portal hotel fields and buttons are mapped.
+The login button opens a browser. Log in normally - once Safari Portal redirects you away from the login page, the browser closes itself and the session saves automatically. You can also close the window manually at any point as a fallback.
 
-Use the customer fields above the itinerary text for draft metadata: last name, B2C/B2B, and agency name for B2B bookings. These values are included in the parsed JSON and can be mapped to Safari Portal fields later.
-
-In the `Build Itinerary` tab, each stay can have more than one hotel option: use `+ Add alternate hotel` to add backup choices (with optional room notes) alongside the primary pick, so the draft builder can try each one in order on Safari Portal.
+`Build Draft` opens Safari Portal with your saved login session and tries to fill the fields listed in `config/portal.json`. Keep this as a supervised step until the real Safari Portal hotel fields and buttons are mapped. `Close Draft Browser` closes any draft browser windows left open from a previous build.
 
 If a hotel name can't be matched against `data/pages_property.csv`, a `+ New Property Page` button appears in the top bar as a shortcut to Safari Portal's "add property" page (set by `newPropertyPageUrl` in `config/portal.json`).
 

@@ -45,6 +45,23 @@ function seedDefaultData() {
   }
 }
 
+// config/portal.json is deliberately excluded from git, but is included in
+// the packaged app's own bundled resources (the Windows build reads it
+// straight off local disk at build time; the Mac CI build writes it in from
+// a repository secret before packaging - see .github/workflows/build-mac.yml).
+// Seed it into the writable config folder the same way as the data CSVs, so
+// installs come pre-configured instead of throwing "Config file not found."
+function seedDefaultConfig() {
+  if (!app.isPackaged) return;
+  const bundledConfigPath = path.resolve(__dirname, "../config/portal.json");
+  if (!fs.existsSync(bundledConfigPath)) return;
+
+  const targetConfigPath = path.resolve("config/portal.json");
+  if (fs.existsSync(targetConfigPath)) return;
+  fs.mkdirSync(path.dirname(targetConfigPath), { recursive: true });
+  fs.copyFileSync(bundledConfigPath, targetConfigPath);
+}
+
 // Startup failures here would otherwise be a silently-swallowed rejection
 // (app.whenReady().then(createWindow) had no .catch) or an invisible native
 // crash - the app would just vanish with no window and no clue why. Log to
@@ -62,6 +79,7 @@ function logFatal(label, error) {
 
 async function createWindow() {
   seedDefaultData();
+  seedDefaultConfig();
   serverHandle = await startServer({ port: 0, host: "127.0.0.1" });
 
   mainWindow = new BrowserWindow({

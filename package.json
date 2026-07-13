@@ -35,7 +35,6 @@
       "data/**/*",
       "examples/**/*",
       "package.json",
-      "!config/portal.json",
       "!config/portal.debug.json"
     ],
     "win": {

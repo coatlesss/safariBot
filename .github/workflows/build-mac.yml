@@ -34,6 +34,21 @@ jobs:
           rm -rf node_modules/playwright-core/.local-browsers/chromium_headless_shell-*
           rm -rf node_modules/playwright-core/.local-browsers/ffmpeg-*
 
+      # config/portal.json is gitignored (it has real Safari Portal URLs and
+      # selectors, and this repo is public), so it never reaches the runner
+      # via checkout. Write it from a repository secret instead, right before
+      # packaging, so it ends up bundled the same way the Windows build gets
+      # it from the local filesystem.
+      - name: Write portal config
+        env:
+          PORTAL_JSON: ${{ secrets.PORTAL_JSON }}
+        run: |
+          if [ -z "$PORTAL_JSON" ]; then
+            echo "PORTAL_JSON secret is not set - skipping, app will ship without a pre-filled config."
+          else
+            echo "$PORTAL_JSON" > config/portal.json
+          fi
+
       - name: Build macOS app
         run: npm run dist:mac
 

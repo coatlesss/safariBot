@@ -59,6 +59,7 @@ copyJsonButton.addEventListener("click", copyJson);
 loginButton.addEventListener("click", login);
 buildButton.addEventListener("click", buildDraft);
 closeDraftsButton.addEventListener("click", closeDraftBrowsers);
+lastNameInput.addEventListener("input", () => lastNameInput.classList.remove("field-invalid"));
 clientTypeSelect.addEventListener("change", updateAgencyControls);
 agencySelect.addEventListener("change", updateAgencyControls);
 tabPasteButton.addEventListener("click", () => showTab("paste"));
@@ -415,6 +416,14 @@ async function login() {
 }
 
 async function buildDraft() {
+  if (!lastNameInput.value.trim()) {
+    setMessage("Last name is required before building a draft.", true);
+    lastNameInput.classList.add("field-invalid");
+    lastNameInput.focus();
+    return;
+  }
+  lastNameInput.classList.remove("field-invalid");
+
   if (!parsedItinerary) {
     await parseCurrentText();
   }
@@ -435,14 +444,14 @@ async function buildDraft() {
 }
 
 async function closeDraftBrowsers() {
-  setBusy(true);
+  closeDraftsButton.disabled = true;
   try {
     await request("/api/close-drafts", {});
-    setMessage("Closed draft browser windows opened by Safari Bot.");
+    setMessage("Killed the Chrome browser process(es) opened by Safari Bot.");
   } catch (error) {
     setMessage(error.message, true);
   } finally {
-    setBusy(false);
+    closeDraftsButton.disabled = false;
   }
 }
 
@@ -570,7 +579,10 @@ async function request(url, body) {
 }
 
 function setBusy(isBusy) {
-  for (const button of [parseButton, templateButton, sampleButton, clearButton, copyJsonButton, loginButton, buildButton, closeDraftsButton, newPropertyPageButton]) {
+  // closeDraftsButton is deliberately excluded: it's the kill switch for a
+  // stuck or long-running Chrome automation, so it must stay clickable for
+  // the entire time a build request is in flight, not just before/after it.
+  for (const button of [parseButton, templateButton, sampleButton, clearButton, copyJsonButton, loginButton, buildButton, newPropertyPageButton]) {
     button.disabled = isBusy;
   }
 }

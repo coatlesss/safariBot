@@ -2,8 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const readline = require("readline/promises");
 const { chromium } = require("playwright");
+const { ensureChromiumInstalled } = require("./browserSetup");
 
 async function login(config, options = {}) {
+  await ensureChromiumInstalled();
   const browser = await chromium.launch({ headless: false });
   // browser.newPage() creates an implicit context that closes along with
   // the page - fine normally, but this flow closes the page itself (either

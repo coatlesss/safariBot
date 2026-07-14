@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { chromium } = require("playwright");
+const { ensureChromiumInstalled } = require("./browserSetup");
 
 const openDraftBrowsers = new Set();
 let _debugLastPage = null;
@@ -1528,8 +1529,14 @@ async function buildPortalDraft(config, itinerary, options = {}) {
     throw new Error(`Login session not found at ${storagePath}. Run npm run login first.`);
   }
 
+  await ensureChromiumInstalled();
   const browser = await chromium.launch({ headless: Boolean(config.headless) });
   browser.on("disconnected", () => openDraftBrowsers.delete(browser));
+  // Track the browser as soon as it launches, not just once the whole build
+  // finishes - the fill/click sequence below can run long or get stuck, and
+  // it needs to be killable via closeOpenDraftBrowsers() the entire time,
+  // not just after it successfully completes.
+  openDraftBrowsers.add(browser);
   const context = await browser.newContext({ storageState: storagePath });
   const page = await context.newPage();
   page.on("dialog", async (dialog) => {
@@ -1619,7 +1626,6 @@ async function buildPortalDraft(config, itinerary, options = {}) {
     }
 
     if (options.keepOpen) {
-      openDraftBrowsers.add(browser);
       _debugLastPage = page;
       return;
     }
@@ -1643,23 +1649,37 @@ async function openPortalPage(config, url) {
     throw new Error(`Login session not found at ${storagePath}. Run npm run login first.`);
   }
 
+  await ensureChromiumInstalled();
   const browser = await chromium.launch({ headless: false });
   browser.on("disconnected", () => openDraftBrowsers.delete(browser));
+  openDraftBrowsers.add(browser);
   const context = await browser.newContext({ storageState: storagePath });
   const page = await context.newPage();
   await page.goto(url, { waitUntil: "domcontentloaded" });
-  openDraftBrowsers.add(browser);
 }
 
 async function closeOpenDraftBrowsers() {
   const browsers = [...openDraftBrowsers];
   openDraftBrowsers.clear();
 
-  await Promise.allSettled(browsers.map(async (browser) => {
-    if (browser.isConnected()) {
-      await browser.close();
-    }
-  }));
+  await Promise.allSettled(browsers.map((browser) => killBrowser(browser)));
+}
+
+// A browser stuck mid-automation (a hung click, an unresolved wait) can make
+// browser.close() itself hang - falling back to killing the underlying
+// Chrome process directly is what makes this a real "kill" rather than a
+// polite request the automation can ignore.
+async function killBrowser(browser) {
+  if (!browser.isConnected()) return;
+
+  const closedGracefully = await Promise.race([
+    browser.close().then(() => true).catch(() => false),
+    new Promise((resolve) => setTimeout(() => resolve(false), 5000))
+  ]);
+
+  if (!closedGracefully && browser.isConnected()) {
+    browser.process()?.kill("SIGKILL");
+  }
 }
 
 module.exports = {

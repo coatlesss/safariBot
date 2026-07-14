@@ -33,8 +33,8 @@
           </div>
           <div class="client-controls">
             <label class="text-control">
-              <span>Last name</span>
-              <input id="lastNameInput" type="text" autocomplete="family-name" placeholder="Smith">
+              <span>Last name *</span>
+              <input id="lastNameInput" type="text" autocomplete="family-name" placeholder="Smith" required>
             </label>
             <label class="select-control">
               <span>Client type</span>
@@ -110,7 +110,7 @@
             <button id="parseButton" class="primary" type="button">Parse Itinerary</button>
             <button id="loginButton" type="button">Open Login</button>
             <button id="buildButton" type="button">Build Draft</button>
-            <button id="closeDraftsButton" type="button">Close Draft Browser</button>
+            <button id="closeDraftsButton" type="button">Kill Browser</button>
           </div>
           <p id="message" class="message" role="status"></p>
         </div>

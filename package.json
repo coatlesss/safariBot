@@ -49,7 +49,7 @@
     "mac": {
       "target": "dmg",
       "category": "public.app-category.business",
-      "identity": null
+      "identity": "-"
     }
   }
 }

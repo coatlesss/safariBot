@@ -434,8 +434,17 @@ async function buildDraft() {
   setBusy(true);
   setMessage("Opening Safari Portal draft builder. Review the browser when it appears.");
   try {
-    await request("/api/build", { itinerary: parsedItinerary, mode: currentMode(), startDate: currentStartDate(), submit: false });
-    setMessage("Draft builder opened. Review and save in Safari Portal.");
+    const data = await request("/api/build", { itinerary: parsedItinerary, mode: currentMode(), startDate: currentStartDate(), submit: false });
+    if (data.warnings?.length) {
+      const count = data.warnings.length;
+      setMessage(
+        `Draft builder opened, but ${count} step${count === 1 ? "" : "s"} may need a manual check before you submit:\n` +
+        data.warnings.map((w) => `- ${w}`).join("\n"),
+        "warn"
+      );
+    } else {
+      setMessage("Draft builder opened. Review and save in Safari Portal.");
+    }
   } catch (error) {
     setMessage(error.message, true);
   } finally {
@@ -587,9 +596,9 @@ function setBusy(isBusy) {
   }
 }
 
-function setMessage(text, isError = false) {
+function setMessage(text, level = false) {
   message.textContent = text;
-  message.style.color = isError ? "var(--bad)" : "var(--muted)";
+  message.style.color = level === "warn" ? "var(--warn)" : (level ? "var(--bad)" : "var(--muted)");
 }
 
 function currentMode() {

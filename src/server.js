@@ -139,8 +139,8 @@ function createServer() {
       const body = await readJson(req);
       const itinerary = body.itinerary || parseByMode(bodyText(body), body.mode, parseOptions(body));
       const config = loadConfig("config/portal.json");
-      await buildPortalDraft(config, itinerary, { keepOpen: true, submit: Boolean(body.submit) });
-      return sendJson(res, { ok: true });
+      const { warnings } = await buildPortalDraft(config, itinerary, { keepOpen: true, submit: Boolean(body.submit) });
+      return sendJson(res, { ok: true, warnings });
     }
 
     if (req.method === "POST" && url.pathname === "/api/open-new-property-page") {

@@ -5,6 +5,19 @@ const { ensureChromiumInstalled } = require("./browserSetup");
 
 const openDraftBrowsers = new Set();
 let _debugLastPage = null;
+let currentWarnings = null;
+
+// Every soft-failure warning in this file also records into the in-flight
+// build's warnings array (if any), so a locator that silently couldn't be
+// resolved surfaces to the UI as "check this before you submit" instead of
+// only ever reaching a console nobody's watching. A module-level slot is
+// enough here (no need to thread a param through every helper) because the
+// UI disables the Build button for the duration of a build, so only one
+// buildPortalDraft() run is ever collecting warnings at a time.
+function warn(message) {
+  console["warn"](message);
+  if (currentWarnings) currentWarnings.push(message);
+}
 
 function asText(value) {
   if (!value) return "";
@@ -126,7 +139,7 @@ async function fillSpec(scope, spec, value, label) {
 async function clickSpec(scope, spec, label) {
   const locator = await locatorFromSpec(scope, spec);
   if (!locator) {
-    console.warn(`[portalBuilder] Could not resolve locator for ${label}`);
+    warn(`[portalBuilder] Could not resolve locator for ${label}`);
     return false;
   }
   const page = typeof scope?.mouse?.click === "function"
@@ -164,7 +177,7 @@ async function clickSpec(scope, spec, label) {
       await locator.click({ ...clickOptions, force: true });
       return true;
     } catch (forceError) {
-      console.warn(`[portalBuilder] Click fallback failed for ${label}: ${forceError.message}`);
+      warn(`[portalBuilder] Click fallback failed for ${label}: ${forceError.message}`);
       return false;
     }
   }
@@ -173,7 +186,7 @@ async function clickSpec(scope, spec, label) {
 async function selectSpec(page, spec, value, label) {
   const locator = await locatorFromSpec(page, spec);
   if (!locator) {
-    console.warn(`[portalBuilder] Could not resolve selector for ${label}`);
+    warn(`[portalBuilder] Could not resolve selector for ${label}`);
     return false;
   }
 
@@ -191,7 +204,7 @@ async function selectSpec(page, spec, value, label) {
       }
     }
   } catch (error) {
-    console.warn(`[portalBuilder] Could not open selector for ${label}: ${error.message}`);
+    warn(`[portalBuilder] Could not open selector for ${label}: ${error.message}`);
     return false;
   }
 
@@ -221,7 +234,7 @@ async function selectSpec(page, spec, value, label) {
     return true;
   }
 
-  console.warn(`[portalBuilder] Could not select option ${value} for ${label}`);
+  warn(`[portalBuilder] Could not select option ${value} for ${label}`);
   return false;
 }
 
@@ -486,7 +499,7 @@ async function ensureIndexedTarget(page, targetSpec, index, addSpec, label) {
     if (count > requiredIndex) return true;
     if (!addSpec) return false;
 
-    console.warn(`[portalBuilder] ${label}: need index ${requiredIndex}, found ${count}; adding row attempt ${attempt + 1}.`);
+    warn(`[portalBuilder] ${label}: need index ${requiredIndex}, found ${count}; adding row attempt ${attempt + 1}.`);
     const clicked = await clickTimelineAddButton(page, addSpec, `${label} add row`, targetSpec, requiredIndex);
     if (!clicked) return false;
     await page.waitForTimeout(700);
@@ -498,7 +511,7 @@ async function ensureIndexedTarget(page, targetSpec, index, addSpec, label) {
 async function ensureRowByRetry(page, attemptClick, addSpec, label, maxAttempts = 3, attemptClickAfterAdd = null) {
   let clicked = await attemptClick();
   for (let attempt = 0; attempt < maxAttempts && !clicked && addSpec; attempt += 1) {
-    console.warn(`[portalBuilder] ${label}: row not found, clicking add row (attempt ${attempt + 1}).`);
+    warn(`[portalBuilder] ${label}: row not found, clicking add row (attempt ${attempt + 1}).`);
     const added = await clickTimelineAddButton(page, addSpec, `${label} add row`);
     if (!added) break;
     await page.waitForTimeout(700);
@@ -524,7 +537,7 @@ async function clickTimelineAddButton(page, addSpec, label, targetSpec = null, r
         }
       }
     } catch (error) {
-      console.warn(`[portalBuilder] Visible-position add row click failed for ${label}: ${error.message}`);
+      warn(`[portalBuilder] Visible-position add row click failed for ${label}: ${error.message}`);
     }
   }
 
@@ -541,14 +554,14 @@ async function clickTimelineAddButton(page, addSpec, label, targetSpec = null, r
     for (const point of points) {
       await page.mouse.click(point.x, point.y);
       await page.waitForTimeout(Number.isFinite(addSpec.waitMs) ? addSpec.waitMs : 500);
-      console.warn(`[portalBuilder] Clicked fallback add row point ${point.x},${point.y} for ${label}`);
+      warn(`[portalBuilder] Clicked fallback add row point ${point.x},${point.y} for ${label}`);
       if (await rowWasAdded(page, targetSpec, beforeCount, requiredIndex)) return true;
     }
   } catch (error) {
-    console.warn(`[portalBuilder] Bottom-center add row click failed for ${label}: ${error.message}`);
+    warn(`[portalBuilder] Bottom-center add row click failed for ${label}: ${error.message}`);
   }
 
-  console.warn(`[portalBuilder] Add row click did not increase count for ${label}.`);
+  warn(`[portalBuilder] Add row click did not increase count for ${label}.`);
   return false;
 }
 
@@ -622,7 +635,7 @@ async function clickTableColumnAtRow(page, rowSpec, rowIndex, columnSpec, label)
     await page.waitForTimeout(Number.isFinite(columnSpec.waitMs) ? columnSpec.waitMs : 300);
     return true;
   } catch (error) {
-    console.warn(`[portalBuilder] Could not click ${label} by header/row geometry: ${error.message}`);
+    warn(`[portalBuilder] Could not click ${label} by header/row geometry: ${error.message}`);
     return false;
   }
 }
@@ -630,7 +643,7 @@ async function clickTableColumnAtRow(page, rowSpec, rowIndex, columnSpec, label)
 async function clickSpecCenter(scope, spec, label) {
   const locator = await locatorFromSpec(scope, spec);
   if (!locator) {
-    console.warn(`[portalBuilder] Could not resolve locator for ${label}`);
+    warn(`[portalBuilder] Could not resolve locator for ${label}`);
     return false;
   }
 
@@ -648,7 +661,7 @@ async function clickSpecCenter(scope, spec, label) {
     await page.waitForTimeout(Number.isFinite(spec?.waitMs) ? spec.waitMs : 500);
     return true;
   } catch (error) {
-    console.warn(`[portalBuilder] Could not center-click ${label}: ${error.message}`);
+    warn(`[portalBuilder] Could not center-click ${label}: ${error.message}`);
     return false;
   }
 }
@@ -658,13 +671,13 @@ async function clickNestedSpecCenter(page, parentSpec, parentIndex, childSpec, l
 
   const parent = await locatorFromSpec(page, specWithIndex(parentSpec, parentIndex));
   if (!parent || (await parent.count()) === 0) {
-    console.warn(`[portalBuilder] Could not resolve parent locator for ${label}`);
+    warn(`[portalBuilder] Could not resolve parent locator for ${label}`);
     return false;
   }
 
   const child = parent.locator(childSpec.selector).first();
   if ((await child.count()) === 0) {
-    console.warn(`[portalBuilder] Could not resolve nested locator for ${label}`);
+    warn(`[portalBuilder] Could not resolve nested locator for ${label}`);
     return false;
   }
 
@@ -676,7 +689,7 @@ async function clickClosestSpecToReferenceY(page, referenceSpec, targetSpec, lab
 
   const reference = await locatorFromSpec(page, referenceSpec);
   if (!reference || (await reference.count()) === 0) {
-    console.warn(`[portalBuilder] Could not resolve reference locator for ${label}`);
+    warn(`[portalBuilder] Could not resolve reference locator for ${label}`);
     return false;
   }
 
@@ -700,10 +713,10 @@ async function clickClosestSpecToReferenceY(page, referenceSpec, targetSpec, lab
     if (!best) return false;
     await page.mouse.click(best.box.x + (best.box.width / 2), best.box.y + (best.box.height / 2));
     await page.waitForTimeout(Number.isFinite(targetSpec.waitMs) ? targetSpec.waitMs : 500);
-    console.warn(`[portalBuilder] Clicked ${label} candidate ${best.index} at distance ${Math.round(best.distance)}px`);
+    warn(`[portalBuilder] Clicked ${label} candidate ${best.index} at distance ${Math.round(best.distance)}px`);
     return true;
   } catch (error) {
-    console.warn(`[portalBuilder] Could not click closest locator for ${label}: ${error.message}`);
+    warn(`[portalBuilder] Could not click closest locator for ${label}: ${error.message}`);
     return false;
   }
 }
@@ -731,9 +744,9 @@ async function saveDebugSnapshot(page, name) {
     fs.mkdirSync(dir, { recursive: true });
     await page.screenshot({ path: path.join(dir, `${name}.png`), fullPage: true });
     fs.writeFileSync(path.join(dir, `${name}.html`), await page.content(), "utf8");
-    console.warn(`[portalBuilder] Saved debug snapshot: debug/${name}.png and debug/${name}.html`);
+    warn(`[portalBuilder] Saved debug snapshot: debug/${name}.png and debug/${name}.html`);
   } catch (error) {
-    console.warn(`[portalBuilder] Could not save debug snapshot ${name}: ${error.message}`);
+    warn(`[portalBuilder] Could not save debug snapshot ${name}: ${error.message}`);
   }
 }
 
@@ -770,7 +783,7 @@ async function fillHotelDateSelection(page, hotelDatesConfig, itinerary) {
   if (process.env.SAFARI_BOT_DEBUG_ONE_HOTEL) timelinePlan = timelinePlan.slice(0, 2);
   if (!timelinePlan.length) return;
 
-  console.warn(`[portalBuilder] Hotel timeline plan: ${timelinePlan.map(describeTimelineItem).join(", ")}`);
+  warn(`[portalBuilder] Hotel timeline plan: ${timelinePlan.map(describeTimelineItem).join(", ")}`);
   for (const item of timelinePlan) {
     try {
       if (item.isBoundary) {
@@ -780,7 +793,7 @@ async function fillHotelDateSelection(page, hotelDatesConfig, itinerary) {
       }
     } catch (error) {
       const label = item.isBoundary ? item.kind : `Hotel ${item.stayIndex + 1}`;
-      console.warn(`[portalBuilder] ${label} failed, continuing with remaining rows: ${error.message}`);
+      warn(`[portalBuilder] ${label} failed, continuing with remaining rows: ${error.message}`);
       await saveDebugSnapshot(page, item.isBoundary ? `${item.kind}-failed` : `hotel-${item.stayIndex + 1}-failed`);
     }
   }
@@ -823,7 +836,7 @@ async function fillLastTransferRow(page, hotelDatesConfig, transferMention, tran
   }
   if (!opened) {
     await saveDebugSnapshot(page, `${label}-open-failed`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
-    console.warn(`Warning: could not open ${label} row.`);
+    warn(`Warning: could not open ${label} row.`);
     return false;
   }
 
@@ -831,7 +844,7 @@ async function fillLastTransferRow(page, hotelDatesConfig, transferMention, tran
   const selected = await clickTransferActivityOption(page, hotelDatesConfig, `${label} option`);
   if (!selected) {
     await saveDebugSnapshot(page, `${label}-activity-not-found`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
-    console.warn(`Warning: ${label} activity did not resolve or could not be clicked.`);
+    warn(`Warning: ${label} activity did not resolve or could not be clicked.`);
     return false;
   }
 
@@ -842,7 +855,7 @@ async function fillLastTransferRow(page, hotelDatesConfig, transferMention, tran
     };
     const dated = await fillTransferActivityDate(page, lastTriggerConfig, transferDate, 0);
     if (!dated) {
-      console.warn(`Warning: ${label} date could not be selected.`);
+      warn(`Warning: ${label} date could not be selected.`);
     }
   }
 
@@ -855,7 +868,7 @@ async function fillLastTransferRow(page, hotelDatesConfig, transferMention, tran
     const nameSpec = { ...hotelDatesConfig.transferName, arrowDownBeforeEnter: false };
     const filled = await fillDraftEditorMention(page, nameSpec, transferMention, `${label} name`, transferScope, nameSpec);
     if (!filled) {
-      console.warn(`Warning: ${label} name did not resolve or could not be filled.`);
+      warn(`Warning: ${label} name did not resolve or could not be filled.`);
     }
   }
 
@@ -865,7 +878,7 @@ async function fillLastTransferRow(page, hotelDatesConfig, transferMention, tran
 async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex) {
   const firstHotel = stay.firstDay;
   if (!firstHotel) return { filledTransfer: false };
-  console.warn(`[portalBuilder] Filling hotel ${stayIndex + 1} at row ${cellIndex}: ${firstHotel.location || ""} / ${firstHotel.propertyName || firstHotel.accommodation || ""}`);
+  warn(`[portalBuilder] Filling hotel ${stayIndex + 1} at row ${cellIndex}: ${firstHotel.location || ""} / ${firstHotel.propertyName || firstHotel.accommodation || ""}`);
   const locationEditorIndex = cellIndex + stayIndex;
   const hotelEditorIndex = locationEditorIndex + 1;
 
@@ -887,7 +900,7 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
       () => clickSpec(page, hotelBoxLastSpec, `hotel ${stayIndex + 1} box (newly added)`)
     );
     if (!clicked) {
-      console.warn("Warning: hotelDates.firstHotelBox did not resolve, trying fallback selector.");
+      warn("Warning: hotelDates.firstHotelBox did not resolve, trying fallback selector.");
       const fallbackSpec = { selector: "div[class*='Table_activeMenuWrapper']", nth: cellIndex };
       clicked = await clickSpec(page, fallbackSpec, `hotel ${stayIndex + 1} box fallback`);
       if (clicked) hotelScope = await locatorFromSpec(page, fallbackSpec);
@@ -907,7 +920,7 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
         await page.waitForTimeout(300);
         const filled = await fillSpec(page, hotelDatesConfig.accommodationInput || hotelDatesConfig.accommodation, accommodationValue, "first hotel accommodation");
         if (!filled) {
-          console.warn("Warning: accommodation button clicked but accommodation value could not be filled.");
+          warn("Warning: accommodation button clicked but accommodation value could not be filled.");
         }
       } else {
         await fillSpec(page, hotelDatesConfig.accommodation, accommodationValue, "first hotel accommodation");
@@ -922,13 +935,13 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
     ? (await page.locator(hotelDatesConfig.calendarMonth.selector).count()) > 0
     : false;
   if (clicked) {
-    console.warn(`[portalBuilder] hotel ${stayIndex + 1}: calendar already open (from accommodation menu), skipping trigger click.`);
+    warn(`[portalBuilder] hotel ${stayIndex + 1}: calendar already open (from accommodation menu), skipping trigger click.`);
   }
   if (!clicked && hotelDatesConfig.calendarTrigger) {
     clicked = await clickSpec(page, specForIndex(hotelDatesConfig.calendarTrigger, cellIndex), `hotel ${stayIndex + 1} calendar trigger`);
   }
   if (!clicked) {
-    console.warn("Warning: hotelDates.calendarTrigger did not resolve, trying fallback Date control.");
+    warn("Warning: hotelDates.calendarTrigger did not resolve, trying fallback Date control.");
     clicked = await clickSpec(page, { text: "Date" }, "hotel calendar trigger fallback");
     if (!clicked) {
       clicked = await clickSpec(page, { selector: "input[placeholder*='Date'], button[aria-label*='Date']" }, "hotel calendar trigger fallback input/button");
@@ -942,7 +955,7 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
   if (monthName && hotelDatesConfig.calendarMonth) {
     const selectedMonth = await selectSpec(page, hotelDatesConfig.calendarMonth, monthName, "hotel calendar month");
     if (!selectedMonth) {
-      console.warn("Warning: hotelDates.calendarMonth did not resolve or could not be selected.");
+      warn("Warning: hotelDates.calendarMonth did not resolve or could not be selected.");
     }
     await page.waitForTimeout(250);
   }
@@ -950,7 +963,7 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
   if (year && hotelDatesConfig.calendarYear) {
     const selectedYear = await selectSpec(page, hotelDatesConfig.calendarYear, year, "hotel calendar year");
     if (!selectedYear) {
-      console.warn("Warning: hotelDates.calendarYear did not resolve or could not be selected.");
+      warn("Warning: hotelDates.calendarYear did not resolve or could not be selected.");
     }
     await page.waitForTimeout(250);
   }
@@ -983,7 +996,7 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
     if (!clicked) {
       clicked = await clickSpec(page, hotelDatesConfig.calendarDayCell, "hotel calendar day cell");
       if (!clicked) {
-        console.warn("Warning: hotelDates.calendarDayCell selector did not resolve.");
+        warn("Warning: hotelDates.calendarDayCell selector did not resolve.");
       }
     }
   }
@@ -995,10 +1008,10 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
         await cell.click();
         clicked = true;
       } else {
-        console.warn("Warning: no calendar day cell found inside hotelDates.calendarGrid.");
+        warn("Warning: no calendar day cell found inside hotelDates.calendarGrid.");
       }
     } else {
-      console.warn("Warning: hotelDates.calendarGrid selector did not resolve.");
+      warn("Warning: hotelDates.calendarGrid selector did not resolve.");
     }
   }
   if (!clicked) {
@@ -1007,7 +1020,7 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
       await fallbackCell.click();
       clicked = true;
     } else {
-      console.warn("Warning: no calendar day cell could be clicked by fallback selector.");
+      warn("Warning: no calendar day cell could be clicked by fallback selector.");
       await saveDebugSnapshot(page, `hotel-${stayIndex + 1}-calendar-not-found`);
     }
   }
@@ -1016,7 +1029,7 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
   if (hotelDatesConfig.calendarClose) {
     const closed = await clickSpec(page, hotelDatesConfig.calendarClose, "hotel calendar close");
     if (!closed) {
-      console.warn("Warning: hotelDates.calendarClose did not resolve, using fallback close.");
+      warn("Warning: hotelDates.calendarClose did not resolve, using fallback close.");
       await commitCalendarSelection(page, hotelDatesConfig);
     }
   } else {
@@ -1036,7 +1049,7 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
         page
       );
       if (!filled) {
-        console.warn("Warning: hotelDates.location did not resolve or could not be filled.");
+        warn("Warning: hotelDates.location did not resolve or could not be filled.");
       }
     }
   }
@@ -1066,7 +1079,7 @@ async function fillHotelStay(page, hotelDatesConfig, stay, stayIndex, cellIndex)
           );
 
       if (!filled) {
-        console.warn("Warning: hotelDates.hotelName did not resolve or could not be filled.");
+        warn("Warning: hotelDates.hotelName did not resolve or could not be filled.");
       } else if (!accommodationOptions) {
         // The multi-option path already dismisses these per option; a plain
         // single-hotel mention can trigger the same "which room(s)?" and
@@ -1150,7 +1163,7 @@ async function fillTransferRow(page, hotelDatesConfig, transferColumnIndex, tran
 
   let selected = false;
   for (const attempt of transferOpenAttempts) {
-    console.warn(`[portalBuilder] Trying ${label} opener: ${attempt.label}`);
+    warn(`[portalBuilder] Trying ${label} opener: ${attempt.label}`);
     const opened = await attempt.run();
     if (!opened) continue;
     await page.waitForTimeout(500);
@@ -1164,14 +1177,14 @@ async function fillTransferRow(page, hotelDatesConfig, transferColumnIndex, tran
   const transferScope = await locatorFromSpec(page, transferBoxSpec);
   if (!selected) {
     await saveDebugSnapshot(page, `${label}-activity-not-found`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
-    console.warn(`Warning: ${label} activity did not resolve or could not be clicked.`);
+    warn(`Warning: ${label} activity did not resolve or could not be clicked.`);
     return false;
   }
 
   if (transferDate) {
     const dated = await fillTransferActivityDate(page, hotelDatesConfig, transferDate, transferColumnIndex);
     if (!dated) {
-      console.warn(`Warning: ${label} date could not be selected.`);
+      warn(`Warning: ${label} date could not be selected.`);
     }
   }
 
@@ -1185,7 +1198,7 @@ async function fillTransferRow(page, hotelDatesConfig, transferColumnIndex, tran
       specWithIndex(hotelDatesConfig.transferName, transferColumnIndex)
     );
     if (!filled) {
-      console.warn(`Warning: ${label} name did not resolve or could not be filled.`);
+      warn(`Warning: ${label} name did not resolve or could not be filled.`);
     }
   }
 
@@ -1222,7 +1235,7 @@ async function selectCalendarDate(page, hotelDatesConfig, dateValue, label) {
   if (monthName && hotelDatesConfig.calendarMonth) {
     const selectedMonth = await selectSpec(page, hotelDatesConfig.calendarMonth, monthName, `${label} month`);
     if (!selectedMonth) {
-      console.warn(`Warning: month selector did not resolve for ${label}.`);
+      warn(`Warning: month selector did not resolve for ${label}.`);
     }
     await page.waitForTimeout(250);
   }
@@ -1230,7 +1243,7 @@ async function selectCalendarDate(page, hotelDatesConfig, dateValue, label) {
   if (year && hotelDatesConfig.calendarYear) {
     const selectedYear = await selectSpec(page, hotelDatesConfig.calendarYear, year, `${label} year`);
     if (!selectedYear) {
-      console.warn(`Warning: year selector did not resolve for ${label}.`);
+      warn(`Warning: year selector did not resolve for ${label}.`);
     }
     await page.waitForTimeout(250);
   }
@@ -1267,7 +1280,7 @@ async function selectExactMentionSuggestion(page, exactValue) {
     } catch (_) {
       continue;
     }
-    if (debugMention) console.warn(`[portalBuilder][debug-mention] selector "${selector}" matched ${count} element(s)`);
+    if (debugMention) warn(`[portalBuilder][debug-mention] selector "${selector}" matched ${count} element(s)`);
     if (!count) continue;
 
     for (let i = 0; i < count; i += 1) {
@@ -1278,7 +1291,7 @@ async function selectExactMentionSuggestion(page, exactValue) {
       } catch (_) {
         continue;
       }
-      if (debugMention) console.warn(`[portalBuilder][debug-mention]   [${i}] "${text}"`);
+      if (debugMention) warn(`[portalBuilder][debug-mention]   [${i}] "${text}"`);
       const normalized = text.replace(/^@/, "").trim().toLowerCase();
       if (normalized === target) {
         try {
@@ -1298,7 +1311,7 @@ async function fillDraftEditorMention(page, spec, value, label, scope = page, fa
   if (locator && (await locator.count()) === 0) locator = null;
   if (!locator && fallbackSpec) locator = await locatorFromSpec(page, fallbackSpec);
   if (!locator) {
-    console.warn(`[portalBuilder] Could not resolve locator for ${label}`);
+    warn(`[portalBuilder] Could not resolve locator for ${label}`);
     return false;
   }
 
@@ -1329,7 +1342,7 @@ async function fillDraftEditorMention(page, spec, value, label, scope = page, fa
     await page.waitForTimeout(300);
     return true;
   } catch (error) {
-    console.warn(`[portalBuilder] Could not type ${label}: ${error.message}`);
+    warn(`[portalBuilder] Could not type ${label}: ${error.message}`);
     return false;
   }
 }
@@ -1348,7 +1361,7 @@ async function fillHotelNameOptions(page, spec, options, label, scope = page, fa
   if (locator && (await locator.count()) === 0) locator = null;
   if (!locator && fallbackSpec) locator = await locatorFromSpec(page, fallbackSpec);
   if (!locator) {
-    console.warn(`[portalBuilder] Could not resolve locator for ${label}`);
+    warn(`[portalBuilder] Could not resolve locator for ${label}`);
     return false;
   }
 
@@ -1407,7 +1420,7 @@ async function fillHotelNameOptions(page, spec, options, label, scope = page, fa
     if (debugMulti) await saveDebugSnapshot(page, `multioption-${label}-after-area-confirm`.replace(/[^a-z0-9]+/gi, "-").toLowerCase());
     return true;
   } catch (error) {
-    console.warn(`[portalBuilder] Could not type ${label}: ${error.message}`);
+    warn(`[portalBuilder] Could not type ${label}: ${error.message}`);
     return false;
   }
 }
@@ -1426,7 +1439,7 @@ async function selectRoomsIfPrompted(page, rooms, label) {
       await roomOption.click();
       await page.waitForTimeout(150);
     } else {
-      console.warn(`[portalBuilder] Room "${room}" not found in selection modal for ${label}.`);
+      warn(`[portalBuilder] Room "${room}" not found in selection modal for ${label}.`);
     }
   }
 
@@ -1435,7 +1448,7 @@ async function selectRoomsIfPrompted(page, rooms, label) {
     await nextButton.click();
     await page.waitForTimeout(400);
   } else {
-    console.warn(`[portalBuilder] Could not find Next button in room selection modal for ${label}.`);
+    warn(`[portalBuilder] Could not find Next button in room selection modal for ${label}.`);
   }
 }
 
@@ -1458,7 +1471,7 @@ async function confirmAreaPageIfPrompted(page, label) {
     return;
   }
 
-  console.warn(`[portalBuilder] Could not find No button on area-page prompt for ${label}, dismissing without confirming.`);
+  warn(`[portalBuilder] Could not find No button on area-page prompt for ${label}, dismissing without confirming.`);
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
 }
@@ -1540,11 +1553,14 @@ async function buildPortalDraft(config, itinerary, options = {}) {
   const context = await browser.newContext({ storageState: storagePath });
   const page = await context.newPage();
   page.on("dialog", async (dialog) => {
-    console.warn(`[portalBuilder] Unexpected dialog appeared (${dialog.type()}): ${dialog.message()}`);
+    warn(`[portalBuilder] Unexpected dialog appeared (${dialog.type()}): ${dialog.message()}`);
     try {
       await dialog.dismiss();
     } catch (_) {}
   });
+
+  const warnings = [];
+  currentWarnings = warnings;
 
   try {
     await page.goto(config.newItineraryUrl, { waitUntil: "domcontentloaded" });
@@ -1555,7 +1571,7 @@ async function buildPortalDraft(config, itinerary, options = {}) {
         const clicked = await clickSpec(page, config.cookieButton, "accept cookies");
         if (clicked) await page.waitForTimeout(500);
       } catch (err) {
-        console.warn(`Warning: accept cookies click failed: ${err.message}`);
+        warn(`Warning: accept cookies click failed: ${err.message}`);
       }
     }
 
@@ -1565,7 +1581,7 @@ async function buildPortalDraft(config, itinerary, options = {}) {
       if (index > 0 && config.days?.addDayButton) {
         const clicked = await clickSpec(page, config.days.addDayButton, "add day button");
         if (!clicked) {
-          console.warn(`Warning: add day button not found for day ${index + 1}, continuing without clicking.`);
+          warn(`Warning: add day button not found for day ${index + 1}, continuing without clicking.`);
         }
       }
 
@@ -1587,13 +1603,13 @@ async function buildPortalDraft(config, itinerary, options = {}) {
       try {
         const clicked = await clickSpec(page, config.nextButton, "next button");
         if (!clicked) {
-          console.warn("Warning: next button not found or not clickable.");
+          warn("Warning: next button not found or not clickable.");
         } else {
           // wait for UI to advance
           await page.waitForTimeout(750);
         }
       } catch (error) {
-        console.warn(`Warning: clicking next button failed: ${error.message}`);
+        warn(`Warning: clicking next button failed: ${error.message}`);
       }
     }
 
@@ -1603,10 +1619,10 @@ async function buildPortalDraft(config, itinerary, options = {}) {
         // give the panel a moment to render
         await page.waitForTimeout(500);
         const clicked = await clickSpec(page, config.builderSwitch, "builder switch");
-        if (!clicked) console.warn("Warning: builder switch not found or not clickable.");
+        if (!clicked) warn("Warning: builder switch not found or not clickable.");
         else await page.waitForTimeout(500);
       } catch (error) {
-        console.warn(`Warning: clicking builder switch failed: ${error.message}`);
+        warn(`Warning: clicking builder switch failed: ${error.message}`);
       }
     }
 
@@ -1615,27 +1631,30 @@ async function buildPortalDraft(config, itinerary, options = {}) {
       try {
         await fillHotelDateSelection(page, config.hotelDates, itinerary);
       } catch (error) {
-        console.warn(`Warning: hotel date selection flow failed: ${error.message}`);
+        warn(`Warning: hotel date selection flow failed: ${error.message}`);
       }
     }
 
     if (options.submit && config.submitButton) {
       await clickSpec(page, config.submitButton, "submit button");
       await browser.close();
-      return;
+      return { warnings };
     }
 
     if (options.keepOpen) {
       _debugLastPage = page;
-      return;
+      return { warnings };
     }
 
     await browser.close();
+    return { warnings };
   } catch (error) {
     if (browser.isConnected()) {
       await browser.close();
     }
     throw error;
+  } finally {
+    currentWarnings = null;
   }
 }
 

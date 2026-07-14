@@ -414,6 +414,7 @@ textarea {
   min-height: 22px;
   margin-top: 10px;
   font-size: 14px;
+  white-space: pre-line;
 }
 
 .summary-grid {

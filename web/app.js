@@ -60,6 +60,7 @@ loginButton.addEventListener("click", login);
 buildButton.addEventListener("click", buildDraft);
 closeDraftsButton.addEventListener("click", closeDraftBrowsers);
 lastNameInput.addEventListener("input", () => lastNameInput.classList.remove("field-invalid"));
+startDateInput.addEventListener("input", () => startDateInput.classList.remove("field-invalid"));
 clientTypeSelect.addEventListener("change", updateAgencyControls);
 agencySelect.addEventListener("change", updateAgencyControls);
 tabPasteButton.addEventListener("click", () => showTab("paste"));
@@ -423,6 +424,14 @@ async function buildDraft() {
     return;
   }
   lastNameInput.classList.remove("field-invalid");
+
+  if (!startDateInput.value) {
+    setMessage("Trip start date is required before building a draft.", true);
+    startDateInput.classList.add("field-invalid");
+    startDateInput.focus();
+    return;
+  }
+  startDateInput.classList.remove("field-invalid");
 
   if (!parsedItinerary) {
     await parseCurrentText();

@@ -251,7 +251,8 @@ h2 {
   padding: 0 10px;
 }
 
-.text-control input.field-invalid {
+.text-control input.field-invalid,
+.date-control input.field-invalid {
   border-color: var(--bad);
   box-shadow: 0 0 0 1px var(--bad);
 }

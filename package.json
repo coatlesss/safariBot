@@ -12,7 +12,9 @@
     "parse": "node src/index.js parse",
     "test": "node --test",
     "dist": "electron-builder --win nsis --publish never",
-    "dist:mac": "electron-builder --mac --publish never"
+    "dist:mac": "electron-builder --mac --publish never",
+    "release": "npm version",
+    "postversion": "git push && git push --tags"
   },
   "dependencies": {
     "playwright": "^1.45.0"
@@ -38,7 +40,8 @@
       "!config/portal.debug.json"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "Safari-Bot-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": true,
@@ -49,7 +52,8 @@
     "mac": {
       "target": "dmg",
       "category": "public.app-category.business",
-      "identity": "-"
+      "identity": "-",
+      "artifactName": "Safari-Bot-${version}-${arch}.${ext}"
     }
   }
 }

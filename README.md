@@ -102,10 +102,16 @@ This opens the same UI in its own application window and starts the local backen
 
 For producing new builds (as opposed to just installing one from the Releases page above). Standalone Windows and Mac apps with Chromium bundled in (no separate Playwright install needed on the machine running them):
 
-- **Windows**: `npm run dist` builds an NSIS installer at `dist/Safari Bot Setup <version>.exe`. Unsigned, so Windows SmartScreen will flag it on first run ("More info" -> "Run anyway"). Config and data live in the app's own install folder (typically `%LOCALAPPDATA%\Programs\safari-bot\`).
-- **Mac**: built via the `Build macOS App` GitHub Actions workflow (manual trigger only, since it needs a macOS runner this project can't build on directly) - produces an arm64 `.dmg` as a downloadable artifact. Unsigned, so macOS Gatekeeper will block it on first run (right-click the app -> Open). Config and data live in `~/Library/Application Support/Safari Bot/`.
+- **Windows**: `npm run dist` builds an NSIS installer at `dist/Safari-Bot-Setup-<version>.exe`. Unsigned, so Windows SmartScreen will flag it on first run ("More info" -> "Run anyway"). Config and data live in the app's own install folder (typically `%LOCALAPPDATA%\Programs\safari-bot\`).
+- **Mac**: `npm run dist:mac` (needs a macOS runner - this project can't build it directly) produces an ad-hoc-signed arm64 `.dmg` at `dist/Safari-Bot-<version>-arm64.dmg`. Gatekeeper still blocks it as from an unidentified developer on first run (right-click the app -> Open), but ad-hoc signing keeps it from being flagged as outright "damaged" the way a fully unsigned arm64 app is. Config and data live in `~/Library/Application Support/Safari Bot/`.
 
 Both builds bundle whatever `config/portal.json` exists locally at build time (Windows) or is provided via the `PORTAL_JSON` repository secret (Mac CI, since `config/portal.json` is gitignored and this repo is public) and seed it - along with the `data/*.csv` files - into place on first launch, so a fresh install comes pre-configured instead of starting empty.
+
+### Cutting a release
+
+`npm run release -- patch` (or `minor`/`major`) bumps the version in `package.json`, commits it, tags it (`vX.Y.Z`), and pushes both - this is just `npm version` under the hood. The pushed tag triggers the `Release` GitHub Actions workflow, which builds the Windows and Mac installers in parallel and publishes them as assets on a new GitHub Release for that tag automatically. No manual `gh release` commands needed.
+
+The `Build macOS App` workflow still exists separately for one-off Mac-only rebuilds (e.g. testing a fix) without cutting a full versioned release.
 
 ## One-time login
 

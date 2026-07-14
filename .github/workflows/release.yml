@@ -1,0 +1,131 @@
+name: Release
+
+# Triggered by `npm version patch|minor|major` (see package.json's release/
+# postversion scripts), which commits the version bump and pushes a matching
+# vX.Y.Z tag. That single push builds both installers and publishes them to
+# a GitHub Release for the tag - no manual gh commands needed per release.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Bundles the browser into node_modules so the packaged app doesn't
+      # need a separate Playwright install on the machine that runs it -
+      # PLAYWRIGHT_BROWSERS_PATH=0 makes it install alongside playwright-core
+      # instead of in the global cache. Only the regular Chromium build is
+      # kept; this app never launches headless-shell or records video.
+      - name: Download Chromium for bundling
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: "0"
+        run: npx playwright install chromium
+        shell: bash
+
+      - name: Trim unused browser variants
+        shell: bash
+        run: |
+          rm -rf node_modules/playwright-core/.local-browsers/chromium_headless_shell-*
+          rm -rf node_modules/playwright-core/.local-browsers/ffmpeg-*
+
+      # config/portal.json is gitignored (it has real Safari Portal URLs and
+      # selectors, and this repo is public), so it never reaches the runner
+      # via checkout. Write it from a repository secret instead, right before
+      # packaging, the same way the Mac build does.
+      - name: Write portal config
+        shell: bash
+        env:
+          PORTAL_JSON: ${{ secrets.PORTAL_JSON }}
+        run: |
+          if [ -z "$PORTAL_JSON" ]; then
+            echo "PORTAL_JSON secret is not set - skipping, app will ship without a pre-filled config."
+          else
+            echo "$PORTAL_JSON" > config/portal.json
+          fi
+
+      - name: Build Windows installer
+        run: npm run dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: safari-bot-win
+          path: dist/*.exe
+
+  build-mac:
+    # GitHub's Intel (macos-13) hosted runners are effectively unavailable
+    # (jobs sit queued indefinitely) - arm64 covers every Mac sold since
+    # late 2020, which is the practical target now.
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Chromium for bundling
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: "0"
+        run: npx playwright install chromium
+
+      - name: Trim unused browser variants
+        run: |
+          rm -rf node_modules/playwright-core/.local-browsers/chromium_headless_shell-*
+          rm -rf node_modules/playwright-core/.local-browsers/ffmpeg-*
+
+      - name: Write portal config
+        env:
+          PORTAL_JSON: ${{ secrets.PORTAL_JSON }}
+        run: |
+          if [ -z "$PORTAL_JSON" ]; then
+            echo "PORTAL_JSON secret is not set - skipping, app will ship without a pre-filled config."
+          else
+            echo "$PORTAL_JSON" > config/portal.json
+          fi
+
+      - name: Build macOS app
+        run: npm run dist:mac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: safari-bot-mac
+          path: dist/*.dmg
+
+  publish-release:
+    needs: [build-windows, build-mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create or update the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ github.ref_name }}"
+          repo="${{ github.repository }}"
+          assets=(artifacts/safari-bot-win/*.exe artifacts/safari-bot-mac/*.dmg)
+
+          if gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
+            gh release upload "$tag" "${assets[@]}" --repo "$repo" --clobber
+          else
+            gh release create "$tag" "${assets[@]}" --repo "$repo" --title "Safari Bot $tag" --generate-notes
+          fi

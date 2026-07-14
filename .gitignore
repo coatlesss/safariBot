@@ -4,3 +4,4 @@ config/portal.json
 tmp/
 *.log
 dist/
+debug/

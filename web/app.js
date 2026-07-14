@@ -132,6 +132,7 @@ async function parseCurrentText() {
     const data = await request("/api/parse", parseRequestBody());
     parsedItinerary = data.itinerary;
     fillLastNameFromClientName(parsedItinerary);
+    fillStartDateFromParsed(parsedItinerary);
     renderItinerary(parsedItinerary);
     const dayCount = parsedItinerary.days.length;
     setMessage(`Parsed ${dayCount} day${dayCount === 1 ? "" : "s"}.`);
@@ -153,6 +154,16 @@ function fillLastNameFromClientName(itinerary) {
   lastNameInput.value = derivedLastName;
   lastNameInput.classList.remove("field-invalid");
   itinerary.lastName = derivedLastName;
+}
+
+// Same idea for the trip start date - itineraries often already state it
+// (a "Start: ..." line, or just the first day's own date), so fill the
+// Trip Starts box from what the parser found instead of making employees
+// re-enter it, but never clobber a date already set in the box.
+function fillStartDateFromParsed(itinerary) {
+  if (startDateInput.value || !/^\d{4}-\d{2}-\d{2}$/.test(itinerary.startDate || "")) return;
+  startDateInput.value = itinerary.startDate;
+  startDateInput.classList.remove("field-invalid");
 }
 
 async function loadAreas() {

@@ -131,6 +131,7 @@ async function parseCurrentText() {
   try {
     const data = await request("/api/parse", parseRequestBody());
     parsedItinerary = data.itinerary;
+    fillLastNameFromClientName(parsedItinerary);
     renderItinerary(parsedItinerary);
     const dayCount = parsedItinerary.days.length;
     setMessage(`Parsed ${dayCount} day${dayCount === 1 ? "" : "s"}.`);
@@ -139,6 +140,19 @@ async function parseCurrentText() {
   } finally {
     setBusy(false);
   }
+}
+
+// Employees often paste itineraries that already have a "Client: Jane Smith"
+// line - fill the Last Name box (and the itinerary object about to be
+// rendered) from its surname instead of making them retype it, but never
+// clobber a value they've already typed in themselves.
+function fillLastNameFromClientName(itinerary) {
+  if (lastNameInput.value.trim() || !itinerary.clientName) return;
+  const derivedLastName = itinerary.clientName.trim().split(/\s+/).pop();
+  if (!derivedLastName) return;
+  lastNameInput.value = derivedLastName;
+  lastNameInput.classList.remove("field-invalid");
+  itinerary.lastName = derivedLastName;
 }
 
 async function loadAreas() {

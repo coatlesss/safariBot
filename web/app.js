@@ -61,6 +61,7 @@ buildButton.addEventListener("click", buildDraft);
 closeDraftsButton.addEventListener("click", closeDraftBrowsers);
 lastNameInput.addEventListener("input", () => lastNameInput.classList.remove("field-invalid"));
 startDateInput.addEventListener("input", () => startDateInput.classList.remove("field-invalid"));
+agencyNameInput.addEventListener("input", () => agencyNameInput.classList.remove("field-invalid"));
 clientTypeSelect.addEventListener("change", updateAgencyControls);
 agencySelect.addEventListener("change", updateAgencyControls);
 tabPasteButton.addEventListener("click", () => showTab("paste"));
@@ -432,6 +433,14 @@ async function buildDraft() {
     return;
   }
   startDateInput.classList.remove("field-invalid");
+
+  if (clientTypeSelect.value === "b2b" && !currentAgencyName()) {
+    setMessage("Agency is required for B2B bookings before building a draft.", true);
+    const target = agencySelect.value === "custom" ? agencyNameInput : agencySelect;
+    target.classList.add("field-invalid");
+    target.focus();
+    return;
+  }
 
   if (!parsedItinerary) {
     await parseCurrentText();
@@ -1098,6 +1107,7 @@ function updateAgencyControls() {
   const isB2b = clientTypeSelect.value === "b2b";
   agencySelectWrap.classList.toggle("hidden", !isB2b);
   agencyCustomWrap.classList.toggle("hidden", !isB2b || agencySelect.value !== "custom");
+  agencySelect.classList.remove("field-invalid");
 }
 
 function escapeHtml(value) {

@@ -252,7 +252,8 @@ h2 {
 }
 
 .text-control input.field-invalid,
-.date-control input.field-invalid {
+.date-control input.field-invalid,
+.select-control select.field-invalid {
   border-color: var(--bad);
   box-shadow: 0 0 0 1px var(--bad);
 }

@@ -43,8 +43,6 @@ const agencySelect = document.querySelector("#agencySelect");
 const agencySelectWrap = document.querySelector("#agencySelectWrap");
 const agencyCustomWrap = document.querySelector("#agencyCustomWrap");
 const agencyNameInput = document.querySelector("#agencyNameInput");
-const guestCountInput = document.querySelector("#guestCountInput");
-const consultantInput = document.querySelector("#consultantInput");
 
 let parsedItinerary = null;
 let stayRows = [{ location: "", nights: 1, hotels: [{ name: "", rooms: "" }] }];
@@ -59,15 +57,13 @@ clearButton.addEventListener("click", () => {
   setMessage("");
 });
 copyJsonButton.addEventListener("click", copyJson);
-generateCsvButton.addEventListener("click", generateQuotationCsv);
+generateCsvButton.addEventListener("click", copyQuotationTable);
 loginButton.addEventListener("click", login);
 buildButton.addEventListener("click", buildDraft);
 closeDraftsButton.addEventListener("click", closeDraftBrowsers);
 lastNameInput.addEventListener("input", () => lastNameInput.classList.remove("field-invalid"));
 startDateInput.addEventListener("input", () => startDateInput.classList.remove("field-invalid"));
 agencyNameInput.addEventListener("input", () => agencyNameInput.classList.remove("field-invalid"));
-guestCountInput.addEventListener("input", () => guestCountInput.classList.remove("field-invalid"));
-consultantInput.addEventListener("input", () => consultantInput.classList.remove("field-invalid"));
 clientTypeSelect.addEventListener("change", updateAgencyControls);
 agencySelect.addEventListener("change", updateAgencyControls);
 tabPasteButton.addEventListener("click", () => showTab("paste"));
@@ -534,50 +530,22 @@ async function copyJson() {
 // currently parsed itinerary, downloaded via a Blob + temporary <a download>
 // (same approach works in a plain browser tab and inside the Electron
 // desktop shell - no IPC/main-process changes needed).
-async function generateQuotationCsv() {
+async function copyQuotationTable() {
   if (!parsedItinerary) {
     setMessage("Parse an itinerary first.", true);
     return;
   }
 
-  if (!guestCountInput.value || Number(guestCountInput.value) <= 0) {
-    setMessage("Number of guests is required before generating a CSV.", true);
-    guestCountInput.classList.add("field-invalid");
-    guestCountInput.focus();
-    return;
-  }
-  guestCountInput.classList.remove("field-invalid");
-
-  if (!consultantInput.value.trim()) {
-    setMessage("Consultant name is required before generating a CSV.", true);
-    consultantInput.classList.add("field-invalid");
-    consultantInput.focus();
-    return;
-  }
-  consultantInput.classList.remove("field-invalid");
-
   parsedItinerary = withCurrentMetadata(parsedItinerary);
   renderItinerary(parsedItinerary);
 
-  const guestCount = Number(guestCountInput.value);
-  const consultant = consultantInput.value.trim();
-  const rows = buildQuotationCsvRows(parsedItinerary, guestCount, consultant);
-  const csvText = rowsToCsv(rows);
-  const fileName = `${quotationFileNameValue(parsedItinerary)} - Quotation Input.csv`;
-
-  // A UTF-8 BOM keeps Excel from mangling non-ASCII characters (accented
-  // names, etc.) when it opens the file.
-  const blob = new Blob(["﻿" + csvText], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-
-  setMessage(`Downloaded ${fileName}`);
+  const rows = buildQuotationTableRows(parsedItinerary);
+  // Tab-separated, not comma-separated: this is the same clipboard format
+  // Excel/Google Sheets use internally when you copy a range of cells, so
+  // pasting this text lands as a proper table instead of one comma-joined
+  // string per cell.
+  await navigator.clipboard.writeText(rowsToTsv(rows));
+  setMessage("Quotation table copied - paste it directly into Excel or Sheets.");
 }
 
 // One row per stay's hotel option(s), a Transport row between stays (from
@@ -585,8 +553,7 @@ async function generateQuotationCsv() {
 // itinerary text actually included one - never a fabricated placeholder.
 // Iterating getHotelStays() (not a fixed day range) means this scales to
 // however many hotel stays the itinerary has.
-function buildQuotationCsvRows(itinerary, guestCount, consultant) {
-  const pax = String(guestCount);
+function buildQuotationTableRows(itinerary) {
   const clientName = itinerary.clientName || itinerary.lastName || "";
   const fileName = quotationFileNameValue(itinerary);
 
@@ -594,7 +561,7 @@ function buildQuotationCsvRows(itinerary, guestCount, consultant) {
     ["Client Name", clientName, "", "", "Start Date", formatShortDate(itinerary.startDate), "", "", "ZAR TO EUR", "", "", "", ""],
     ["File Name", fileName, "", "", "End Date", formatShortDate(itinerary.endDate), "", "", "ZAR to USD", "", "", "", ""],
     ["Reference", "", "", "", "# of Nights", nightsBetween(itinerary.startDate, itinerary.endDate), "", "", "Standard Markup", "", "", "", ""],
-    ["Consultant", consultant, "", "", "# of Guests", pax, "", "", "", "", "", "", ""],
+    ["Consultant", "", "", "", "# of Guests", "", "", "", "", "", "", "", ""],
     blankCsvRow(),
     ["Date", "Event Type", "Activity Detail", "Notes", "Supplier Name", "Per Person or Per Unit Cost Net", "Per Person or Per Unit Cost Rack", "# of Pax", "# of Units", "Net Total", "Rack Total", "Profit", "% Markup"]
   ];
@@ -608,7 +575,7 @@ function buildQuotationCsvRows(itinerary, guestCount, consultant) {
     if (stayIndex === 0) {
       const flightText = dayFlightsText(itinerary.days[stay.startIndex]);
       if (flightText) {
-        rows.push(quotationEventRow(dateLabel, "Flight", flightText, pax));
+        rows.push(quotationEventRow(dateLabel, "Flight", flightText));
         rows.push(blankCsvRow());
       }
     } else {
@@ -616,7 +583,7 @@ function buildQuotationCsvRows(itinerary, guestCount, consultant) {
       const transfer = itinerary.days[previousStay.startIndex]?.transferAfter;
       if (transfer) {
         const detail = [transfer.fromArea, transfer.toArea].filter(Boolean).join(" to ") || transfer.name || "";
-        rows.push(quotationEventRow(dateLabel, "Transport", detail, pax));
+        rows.push(quotationEventRow(dateLabel, "Transport", detail));
         dateAlreadyShown = true;
       }
     }
@@ -626,7 +593,7 @@ function buildQuotationCsvRows(itinerary, guestCount, consultant) {
     hotelOptions.forEach((option, optionIndex) => {
       const label = `${option.name.trim()} (${nights} night${nights === 1 ? "" : "s"})`;
       if (optionIndex === 0) {
-        rows.push(quotationEventRow(dateAlreadyShown ? "" : dateLabel, "Accommodation", label, pax));
+        rows.push(quotationEventRow(dateAlreadyShown ? "" : dateLabel, "Accommodation", label));
       } else {
         rows.push(quotationAlternateRow(label));
       }
@@ -638,7 +605,7 @@ function buildQuotationCsvRows(itinerary, guestCount, consultant) {
   const lastDayIndex = itinerary.days.length - 1;
   const departureFlightText = dayFlightsText(itinerary.days[lastDayIndex]);
   if (departureFlightText) {
-    rows.push(quotationEventRow(formatDayLabel(itinerary, lastDayIndex), "Flight", departureFlightText, pax));
+    rows.push(quotationEventRow(formatDayLabel(itinerary, lastDayIndex), "Flight", departureFlightText));
   }
 
   rows.push(["", "", "", "", "", "", "", "", "Totals", "0.00", "0.00", "0.00", ""]);
@@ -650,8 +617,8 @@ function buildQuotationCsvRows(itinerary, guestCount, consultant) {
   return rows;
 }
 
-function quotationEventRow(dateLabel, eventType, activityDetail, pax) {
-  return [dateLabel, eventType, activityDetail, "", "", "", "0.00", pax, "", "0.00", "0.00", "0.00", ""];
+function quotationEventRow(dateLabel, eventType, activityDetail) {
+  return [dateLabel, eventType, activityDetail, "", "", "", "0.00", "", "", "0.00", "0.00", "0.00", ""];
 }
 
 function quotationAlternateRow(label) {
@@ -716,13 +683,15 @@ function nightsBetween(startDate, endDate) {
   return String(Math.round((end - start) / 86400000));
 }
 
-function csvField(value) {
-  const str = String(value ?? "");
-  return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+// TSV has no standard quoting mechanism the way CSV does, so a literal tab
+// or newline inside a value (never expected in practice here) is flattened
+// to a space rather than corrupting the column structure on paste.
+function tsvField(value) {
+  return String(value ?? "").replace(/[\t\r\n]+/g, " ");
 }
 
-function rowsToCsv(rows) {
-  return rows.map((row) => row.map(csvField).join(",")).join("\r\n") + "\r\n";
+function rowsToTsv(rows) {
+  return rows.map((row) => row.map(tsvField).join("\t")).join("\n");
 }
 
 async function refreshStatus() {

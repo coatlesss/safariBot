@@ -533,6 +533,7 @@ async function copyJson() {
 async function copyQuotationTable() {
   if (!parsedItinerary) {
     setMessage("Parse an itinerary first.", true);
+    flashButtonText(generateCsvButton, "Itinerary required");
     return;
   }
 
@@ -548,17 +549,45 @@ async function copyQuotationTable() {
   // text has no way to express it at all.
   const tsvText = rowsToTsv(rows);
   try {
-    const item = new ClipboardItem({
-      "text/plain": new Blob([tsvText], { type: "text/plain" }),
-      "text/html": new Blob([rowsToHtmlTable(rows)], { type: "text/html" })
-    });
-    await navigator.clipboard.write([item]);
+    try {
+      const item = new ClipboardItem({
+        "text/plain": new Blob([tsvText], { type: "text/plain" }),
+        "text/html": new Blob([rowsToHtmlTable(rows)], { type: "text/html" })
+      });
+      await navigator.clipboard.write([item]);
+    } catch (error) {
+      // Some environments don't support multi-format clipboard writes -
+      // still pastes as a table, just without the bolded Date column.
+      await navigator.clipboard.writeText(tsvText);
+    }
   } catch (error) {
-    // Some environments don't support multi-format clipboard writes - still
-    // pastes as a table, just without the bolded Date column.
-    await navigator.clipboard.writeText(tsvText);
+    setMessage(`Could not copy: ${error.message}`, true);
+    flashButtonText(generateCsvButton, "Copy failed");
+    return;
   }
+
   setMessage("Quotation table copied - paste it directly into Excel or Sheets.");
+  flashButtonText(generateCsvButton, "Copied!");
+}
+
+// Temporarily swaps a button's label to give the user something more
+// obvious than just the shared #message line to look at - reverts back to
+// whatever the button said before once the flash expires. Re-flashing before
+// the previous one expires (e.g. a quick double-click) just restarts the
+// timer against the same original label rather than getting stuck on the
+// flashed text.
+function flashButtonText(button, text, duration = 2000) {
+  if (button.dataset.flashTimeout) {
+    clearTimeout(Number(button.dataset.flashTimeout));
+  } else {
+    button.dataset.originalText = button.textContent;
+  }
+  button.textContent = text;
+  button.dataset.flashTimeout = String(setTimeout(() => {
+    button.textContent = button.dataset.originalText;
+    delete button.dataset.originalText;
+    delete button.dataset.flashTimeout;
+  }, duration));
 }
 
 // Just the day-by-day rows - no header/footer block, since this is meant to

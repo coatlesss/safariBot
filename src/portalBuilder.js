@@ -98,7 +98,17 @@ async function fillSpec(scope, spec, value, label) {
     return false;
   }
 
-  await locator.waitFor({ state: "visible", timeout: 5000 });
+  // A selector-based spec always yields a truthy (lazy) locator even when
+  // nothing matches, so a selector that resolves to zero elements would
+  // otherwise hang here for the full timeout and then throw uncaught,
+  // aborting the whole build instead of warning and moving on like every
+  // other soft failure in this file.
+  try {
+    await locator.waitFor({ state: "visible", timeout: 5000 });
+  } catch (error) {
+    warn(`[portalBuilder] Could not resolve locator for ${label}: ${error.message}`);
+    return false;
+  }
 
   try {
     await locator.fill(text);
@@ -471,7 +481,10 @@ async function fillFields(page, fields, itinerary) {
     // "Info Page" selection), rather than something itinerary-specific.
     const value = spec?.constantValue ?? getFieldValue(itinerary, key);
     const filled = await fillSpec(page, spec, value, key);
-    if (!filled && value) {
+    // asText(), not a raw truthiness check on value - an empty array (e.g.
+    // no summaryNotes parsed) is truthy in JS but has nothing worth filling,
+    // and is not a real failure worth a debug snapshot.
+    if (!filled && asText(value)) {
       await saveDebugSnapshot(page, `general-info-${key}-fill-failed`);
     }
   }

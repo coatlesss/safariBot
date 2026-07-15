@@ -470,7 +470,10 @@ async function fillFields(page, fields, itinerary) {
     // always get the same fixed value on every draft (e.g. a standing
     // "Info Page" selection), rather than something itinerary-specific.
     const value = spec?.constantValue ?? getFieldValue(itinerary, key);
-    await fillSpec(page, spec, value, key);
+    const filled = await fillSpec(page, spec, value, key);
+    if (!filled && value) {
+      await saveDebugSnapshot(page, `general-info-${key}-fill-failed`);
+    }
   }
 }
 

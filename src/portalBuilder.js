@@ -112,41 +112,42 @@ async function fillSpec(scope, spec, value, label) {
 
   try {
     await locator.fill(text);
-    // If this is a react-select or combobox, press Enter to create/select the option
-    try {
-      const info = await locator.evaluate((el) => ({ id: el.id || "", role: el.getAttribute("role") || "" }));
-      if ((info.id && info.id.startsWith("react-select")) || (info.role && info.role.toLowerCase() === "combobox")) {
-        await locator.press("Enter");
-      }
-    } catch (_) {}
+    await confirmComboboxSelection(locator, spec);
     return true;
   } catch (error) {
     try {
       await locator.click({ force: true });
       await locator.fill(text);
-      try {
-        const info = await locator.evaluate((el) => ({ id: el.id || "", role: el.getAttribute("role") || "" }));
-        if ((info.id && info.id.startsWith("react-select")) || (info.role && info.role.toLowerCase() === "combobox")) {
-          await locator.press("Enter");
-        }
-      } catch (_) {}
+      await confirmComboboxSelection(locator, spec);
       return true;
     } catch (_) {
       try {
         await locator.click({ force: true });
         await locator.type(text, { delay: 50 });
-        try {
-          const info = await locator.evaluate((el) => ({ id: el.id || "", role: el.getAttribute("role") || "" }));
-          if ((info.id && info.id.startsWith("react-select")) || (info.role && info.role.toLowerCase() === "combobox")) {
-            await locator.press("Enter");
-          }
-        } catch (_) {}
+        await confirmComboboxSelection(locator, spec);
         return true;
       } catch (typeError) {
         throw new Error(`Could not fill ${label}: ${error.message}; fallback type failed: ${typeError.message}`);
       }
     }
   }
+}
+
+// A react-select input (or any combobox) needs its typed text confirmed
+// with Enter to actually select/create the option - fill() alone just
+// leaves it sitting in the box. A remote/async-backed select (e.g. a
+// content-library page picker) can take noticeably longer than a small
+// local list to populate its suggestion dropdown, so pressing Enter
+// immediately can fire before a matching option ever appears, in which
+// case the value never gets confirmed even though it looks "typed".
+async function confirmComboboxSelection(locator, spec) {
+  try {
+    const info = await locator.evaluate((el) => ({ id: el.id || "", role: el.getAttribute("role") || "" }));
+    if ((info.id && info.id.startsWith("react-select")) || (info.role && info.role.toLowerCase() === "combobox")) {
+      await locator.page().waitForTimeout(spec?.commitDelayMs ?? 2000);
+      await locator.press("Enter");
+    }
+  } catch (_) {}
 }
 
 async function clickSpec(scope, spec, label) {

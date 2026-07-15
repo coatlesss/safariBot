@@ -255,7 +255,7 @@ function parseHotelItinerary(text, options = {}) {
       accommodation: day.accommodation,
       activities: [],
       transfers: [],
-      flights: [],
+      flights: day.flights || [],
       meals: [],
       notes: [],
       ...(day.accommodationOptions ? { accommodationOptions: day.accommodationOptions } : {})

@@ -54,6 +54,14 @@
               <span>Agency name</span>
               <input id="agencyNameInput" type="text" placeholder="Agency name">
             </label>
+            <label class="text-control nights-control">
+              <span>Guests *</span>
+              <input id="guestCountInput" type="number" min="1" placeholder="5" required>
+            </label>
+            <label class="text-control">
+              <span>Consultant *</span>
+              <input id="consultantInput" type="text" placeholder="Jane Doe" required>
+            </label>
           </div>
 
           <div class="pane-subheader">
@@ -118,7 +126,10 @@
         <div class="pane output-pane">
           <div class="pane-header">
             <h2>Draft Preview</h2>
-            <button id="copyJsonButton" type="button">Copy JSON</button>
+            <div class="button-row">
+              <button id="copyJsonButton" type="button">Copy JSON</button>
+              <button id="generateCsvButton" type="button">Generate CSV</button>
+            </div>
           </div>
 
           <div id="summary" class="summary-grid"></div>

@@ -7,6 +7,7 @@ const templateButton = document.querySelector("#templateButton");
 const sampleButton = document.querySelector("#sampleButton");
 const clearButton = document.querySelector("#clearButton");
 const copyJsonButton = document.querySelector("#copyJsonButton");
+const generateCsvButton = document.querySelector("#generateCsvButton");
 const loginButton = document.querySelector("#loginButton");
 const buildButton = document.querySelector("#buildButton");
 const closeDraftsButton = document.querySelector("#closeDraftsButton");
@@ -42,6 +43,8 @@ const agencySelect = document.querySelector("#agencySelect");
 const agencySelectWrap = document.querySelector("#agencySelectWrap");
 const agencyCustomWrap = document.querySelector("#agencyCustomWrap");
 const agencyNameInput = document.querySelector("#agencyNameInput");
+const guestCountInput = document.querySelector("#guestCountInput");
+const consultantInput = document.querySelector("#consultantInput");
 
 let parsedItinerary = null;
 let stayRows = [{ location: "", nights: 1, hotels: [{ name: "", rooms: "" }] }];
@@ -56,12 +59,15 @@ clearButton.addEventListener("click", () => {
   setMessage("");
 });
 copyJsonButton.addEventListener("click", copyJson);
+generateCsvButton.addEventListener("click", generateQuotationCsv);
 loginButton.addEventListener("click", login);
 buildButton.addEventListener("click", buildDraft);
 closeDraftsButton.addEventListener("click", closeDraftBrowsers);
 lastNameInput.addEventListener("input", () => lastNameInput.classList.remove("field-invalid"));
 startDateInput.addEventListener("input", () => startDateInput.classList.remove("field-invalid"));
 agencyNameInput.addEventListener("input", () => agencyNameInput.classList.remove("field-invalid"));
+guestCountInput.addEventListener("input", () => guestCountInput.classList.remove("field-invalid"));
+consultantInput.addEventListener("input", () => consultantInput.classList.remove("field-invalid"));
 clientTypeSelect.addEventListener("change", updateAgencyControls);
 agencySelect.addEventListener("change", updateAgencyControls);
 tabPasteButton.addEventListener("click", () => showTab("paste"));
@@ -524,6 +530,201 @@ async function copyJson() {
   setMessage("Parsed JSON copied.");
 }
 
+// Builds a CSV matching the company's Quotation Tool input format from the
+// currently parsed itinerary, downloaded via a Blob + temporary <a download>
+// (same approach works in a plain browser tab and inside the Electron
+// desktop shell - no IPC/main-process changes needed).
+async function generateQuotationCsv() {
+  if (!parsedItinerary) {
+    setMessage("Parse an itinerary first.", true);
+    return;
+  }
+
+  if (!guestCountInput.value || Number(guestCountInput.value) <= 0) {
+    setMessage("Number of guests is required before generating a CSV.", true);
+    guestCountInput.classList.add("field-invalid");
+    guestCountInput.focus();
+    return;
+  }
+  guestCountInput.classList.remove("field-invalid");
+
+  if (!consultantInput.value.trim()) {
+    setMessage("Consultant name is required before generating a CSV.", true);
+    consultantInput.classList.add("field-invalid");
+    consultantInput.focus();
+    return;
+  }
+  consultantInput.classList.remove("field-invalid");
+
+  parsedItinerary = withCurrentMetadata(parsedItinerary);
+  renderItinerary(parsedItinerary);
+
+  const guestCount = Number(guestCountInput.value);
+  const consultant = consultantInput.value.trim();
+  const rows = buildQuotationCsvRows(parsedItinerary, guestCount, consultant);
+  const csvText = rowsToCsv(rows);
+  const fileName = `${quotationFileNameValue(parsedItinerary)} - Quotation Input.csv`;
+
+  // A UTF-8 BOM keeps Excel from mangling non-ASCII characters (accented
+  // names, etc.) when it opens the file.
+  const blob = new Blob(["﻿" + csvText], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  setMessage(`Downloaded ${fileName}`);
+}
+
+// One row per stay's hotel option(s), a Transport row between stays (from
+// the already-computed transferAfter), and a Flight row wherever the parsed
+// itinerary text actually included one - never a fabricated placeholder.
+// Iterating getHotelStays() (not a fixed day range) means this scales to
+// however many hotel stays the itinerary has.
+function buildQuotationCsvRows(itinerary, guestCount, consultant) {
+  const pax = String(guestCount);
+  const clientName = itinerary.clientName || itinerary.lastName || "";
+  const fileName = quotationFileNameValue(itinerary);
+
+  const rows = [
+    ["Client Name", clientName, "", "", "Start Date", formatShortDate(itinerary.startDate), "", "", "ZAR TO EUR", "", "", "", ""],
+    ["File Name", fileName, "", "", "End Date", formatShortDate(itinerary.endDate), "", "", "ZAR to USD", "", "", "", ""],
+    ["Reference", "", "", "", "# of Nights", nightsBetween(itinerary.startDate, itinerary.endDate), "", "", "Standard Markup", "", "", "", ""],
+    ["Consultant", consultant, "", "", "# of Guests", pax, "", "", "", "", "", "", ""],
+    blankCsvRow(),
+    ["Date", "Event Type", "Activity Detail", "Notes", "Supplier Name", "Per Person or Per Unit Cost Net", "Per Person or Per Unit Cost Rack", "# of Pax", "# of Units", "Net Total", "Rack Total", "Profit", "% Markup"]
+  ];
+
+  const stays = getHotelStays(itinerary);
+
+  stays.forEach((stay, stayIndex) => {
+    const dateLabel = formatDayLabel(itinerary, stay.startIndex);
+    let dateAlreadyShown = false;
+
+    if (stayIndex === 0) {
+      const flightText = dayFlightsText(itinerary.days[stay.startIndex]);
+      if (flightText) {
+        rows.push(quotationEventRow(dateLabel, "Flight", flightText, pax));
+        rows.push(blankCsvRow());
+      }
+    } else {
+      const previousStay = stays[stayIndex - 1];
+      const transfer = itinerary.days[previousStay.startIndex]?.transferAfter;
+      if (transfer) {
+        const detail = [transfer.fromArea, transfer.toArea].filter(Boolean).join(" to ") || transfer.name || "";
+        rows.push(quotationEventRow(dateLabel, "Transport", detail, pax));
+        dateAlreadyShown = true;
+      }
+    }
+
+    const nights = stay.endIndex - stay.startIndex + 1;
+    const hotelOptions = getStayHotelOptions(stay).filter((option) => option.name.trim());
+    hotelOptions.forEach((option, optionIndex) => {
+      const label = `${option.name.trim()} (${nights} night${nights === 1 ? "" : "s"})`;
+      if (optionIndex === 0) {
+        rows.push(quotationEventRow(dateAlreadyShown ? "" : dateLabel, "Accommodation", label, pax));
+      } else {
+        rows.push(quotationAlternateRow(label));
+      }
+    });
+
+    rows.push(blankCsvRow());
+  });
+
+  const lastDayIndex = itinerary.days.length - 1;
+  const departureFlightText = dayFlightsText(itinerary.days[lastDayIndex]);
+  if (departureFlightText) {
+    rows.push(quotationEventRow(formatDayLabel(itinerary, lastDayIndex), "Flight", departureFlightText, pax));
+  }
+
+  rows.push(["", "", "", "", "", "", "", "", "Totals", "0.00", "0.00", "0.00", ""]);
+  rows.push(blankCsvRow());
+  rows.push(["", "", "", "Additional Fees", "", "", "", "", "", "", "", "", ""]);
+  rows.push(["", "", "", "Total Trip Cost (Rack)", "0.00", "", "", "", "", "", "", "", ""]);
+  rows.push(["", "", "", "Per Person Cost (Rack)", "0.00", "", "", "", "", "", "", "", ""]);
+
+  return rows;
+}
+
+function quotationEventRow(dateLabel, eventType, activityDetail, pax) {
+  return [dateLabel, eventType, activityDetail, "", "", "", "0.00", pax, "", "0.00", "0.00", "0.00", ""];
+}
+
+function quotationAlternateRow(label) {
+  return ["", "Accommodation", label, "", "", "", "", "", "", "", "", "", ""];
+}
+
+function blankCsvRow() {
+  return ["", "", "", "", "", "", "", "", "", "", "", "", ""];
+}
+
+function dayFlightsText(day) {
+  const value = day?.flights;
+  if (!value) return "";
+  return (Array.isArray(value) ? value.filter(Boolean) : [value]).join("; ").trim();
+}
+
+// Same formula as getFieldValue()'s "fileName" case in src/portalBuilder.js -
+// duplicated here since app.js (browser) and portalBuilder.js (Node) don't
+// share code in this project.
+function quotationFileNameValue(itinerary) {
+  if (itinerary.fileName) return itinerary.fileName;
+  const customerType = (itinerary.customerType || "b2c").toLowerCase();
+  const client = itinerary.lastName || itinerary.clientName || "";
+  const agency = itinerary.agencyName || "";
+
+  if (customerType === "b2b") {
+    const parts = ["JTG"];
+    if (agency) parts.push(agency);
+    if (client) parts.push(client);
+    return parts.join(" ").trim();
+  }
+
+  const parts = ["WT"];
+  if (client) parts.push(client);
+  return parts.join(" - ").trim();
+}
+
+function formatDayLabel(itinerary, dayIndex) {
+  const day = itinerary.days[dayIndex];
+  if (!day) return "";
+  const number = day.number || dayIndex + 1;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day.date || "")) return `Day ${number}`;
+  const parsedDate = new Date(`${day.date}T00:00:00`);
+  const weekday = parsedDate.toLocaleDateString("en-US", { weekday: "long" });
+  const month = parsedDate.toLocaleDateString("en-US", { month: "short" });
+  return `Day ${number}: ${weekday}, ${month} ${parsedDate.getDate()}`;
+}
+
+function formatShortDate(isoDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate || "")) return "";
+  const parsedDate = new Date(`${isoDate}T00:00:00`);
+  const day = String(parsedDate.getDate()).padStart(2, "0");
+  const month = parsedDate.toLocaleDateString("en-US", { month: "short" });
+  const year = String(parsedDate.getFullYear()).slice(-2);
+  return `${day}-${month}-${year}`;
+}
+
+function nightsBetween(startDate, endDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate || "") || !/^\d{4}-\d{2}-\d{2}$/.test(endDate || "")) return "";
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  return String(Math.round((end - start) / 86400000));
+}
+
+function csvField(value) {
+  const str = String(value ?? "");
+  return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+
+function rowsToCsv(rows) {
+  return rows.map((row) => row.map(csvField).join(",")).join("\r\n") + "\r\n";
+}
+
 async function refreshStatus() {
   try {
     const status = await request("/api/status");
@@ -626,7 +827,7 @@ function setBusy(isBusy) {
   // closeDraftsButton is deliberately excluded: it's the kill switch for a
   // stuck or long-running Chrome automation, so it must stay clickable for
   // the entire time a build request is in flight, not just before/after it.
-  for (const button of [parseButton, templateButton, sampleButton, clearButton, copyJsonButton, loginButton, buildButton, newPropertyPageButton]) {
+  for (const button of [parseButton, templateButton, sampleButton, clearButton, copyJsonButton, generateCsvButton, loginButton, buildButton, newPropertyPageButton]) {
     button.disabled = isBusy;
   }
 }

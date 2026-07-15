@@ -101,6 +101,15 @@ async function createWindow() {
     return { action: "deny" };
   });
 
+  // Electron's BrowserWindow has no default download-saving behavior the
+  // way a plain browser tab does - a Blob + <a download> click (used by the
+  // Generate CSV button) otherwise resolves in the renderer with no error
+  // and no file ever lands anywhere. Save straight to the user's Downloads
+  // folder under the suggested filename, matching ordinary browser behavior.
+  mainWindow.webContents.session.on("will-download", (_event, item) => {
+    item.setSavePath(path.join(app.getPath("downloads"), item.getFilename()));
+  });
+
   mainWindow.webContents.on("render-process-gone", (_event, details) => {
     logFatal("Renderer process gone", new Error(JSON.stringify(details)));
   });

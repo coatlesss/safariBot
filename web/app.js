@@ -548,24 +548,15 @@ async function copyQuotationTable() {
   setMessage("Quotation table copied - paste it directly into Excel or Sheets.");
 }
 
-// One row per stay's hotel option(s), a Transport row between stays (from
-// the already-computed transferAfter), and a Flight row wherever the parsed
+// Just the day-by-day rows - no header/footer block, since this is meant to
+// be pasted straight into an existing external template that already has
+// its own headers. One row per stay's hotel option(s) (an arbitrary number,
+// not just one or two - iterating getHotelStays() rather than a fixed day
+// range is what makes that scale), a Transport row between stays (from the
+// already-computed transferAfter), and a Flight row wherever the parsed
 // itinerary text actually included one - never a fabricated placeholder.
-// Iterating getHotelStays() (not a fixed day range) means this scales to
-// however many hotel stays the itinerary has.
 function buildQuotationTableRows(itinerary) {
-  const clientName = itinerary.clientName || itinerary.lastName || "";
-  const fileName = quotationFileNameValue(itinerary);
-
-  const rows = [
-    ["Client Name", clientName, "", "", "Start Date", formatShortDate(itinerary.startDate), "", "", "ZAR TO EUR", "", "", "", ""],
-    ["File Name", fileName, "", "", "End Date", formatShortDate(itinerary.endDate), "", "", "ZAR to USD", "", "", "", ""],
-    ["Reference", "", "", "", "# of Nights", nightsBetween(itinerary.startDate, itinerary.endDate), "", "", "Standard Markup", "", "", "", ""],
-    ["Consultant", "", "", "", "# of Guests", "", "", "", "", "", "", "", ""],
-    blankCsvRow(),
-    ["Date", "Event Type", "Activity Detail", "Notes", "Supplier Name", "Per Person or Per Unit Cost Net", "Per Person or Per Unit Cost Rack", "# of Pax", "# of Units", "Net Total", "Rack Total", "Profit", "% Markup"]
-  ];
-
+  const rows = [];
   const stays = getHotelStays(itinerary);
 
   stays.forEach((stay, stayIndex) => {
@@ -575,15 +566,15 @@ function buildQuotationTableRows(itinerary) {
     if (stayIndex === 0) {
       const flightText = dayFlightsText(itinerary.days[stay.startIndex]);
       if (flightText) {
-        rows.push(quotationEventRow(dateLabel, "Flight", flightText));
-        rows.push(blankCsvRow());
+        rows.push([dateLabel, "Flight", flightText]);
+        rows.push(blankTableRow());
       }
     } else {
       const previousStay = stays[stayIndex - 1];
       const transfer = itinerary.days[previousStay.startIndex]?.transferAfter;
       if (transfer) {
         const detail = [transfer.fromArea, transfer.toArea].filter(Boolean).join(" to ") || transfer.name || "";
-        rows.push(quotationEventRow(dateLabel, "Transport", detail));
+        rows.push([dateLabel, "Transport", detail]);
         dateAlreadyShown = true;
       }
     }
@@ -592,68 +583,32 @@ function buildQuotationTableRows(itinerary) {
     const hotelOptions = getStayHotelOptions(stay).filter((option) => option.name.trim());
     hotelOptions.forEach((option, optionIndex) => {
       const label = `${option.name.trim()} (${nights} night${nights === 1 ? "" : "s"})`;
-      if (optionIndex === 0) {
-        rows.push(quotationEventRow(dateAlreadyShown ? "" : dateLabel, "Accommodation", label));
-      } else {
-        rows.push(quotationAlternateRow(label));
-      }
+      const rowDate = optionIndex === 0 && !dateAlreadyShown ? dateLabel : "";
+      rows.push([rowDate, "Accommodation", label]);
     });
 
-    rows.push(blankCsvRow());
+    // Two blank rows after each stay's last accommodation option.
+    rows.push(blankTableRow());
+    rows.push(blankTableRow());
   });
 
   const lastDayIndex = itinerary.days.length - 1;
   const departureFlightText = dayFlightsText(itinerary.days[lastDayIndex]);
   if (departureFlightText) {
-    rows.push(quotationEventRow(formatDayLabel(itinerary, lastDayIndex), "Flight", departureFlightText));
+    rows.push([formatDayLabel(itinerary, lastDayIndex), "Flight", departureFlightText]);
   }
-
-  rows.push(["", "", "", "", "", "", "", "", "Totals", "0.00", "0.00", "0.00", ""]);
-  rows.push(blankCsvRow());
-  rows.push(["", "", "", "Additional Fees", "", "", "", "", "", "", "", "", ""]);
-  rows.push(["", "", "", "Total Trip Cost (Rack)", "0.00", "", "", "", "", "", "", "", ""]);
-  rows.push(["", "", "", "Per Person Cost (Rack)", "0.00", "", "", "", "", "", "", "", ""]);
 
   return rows;
 }
 
-function quotationEventRow(dateLabel, eventType, activityDetail) {
-  return [dateLabel, eventType, activityDetail, "", "", "", "0.00", "", "", "0.00", "0.00", "0.00", ""];
-}
-
-function quotationAlternateRow(label) {
-  return ["", "Accommodation", label, "", "", "", "", "", "", "", "", "", ""];
-}
-
-function blankCsvRow() {
-  return ["", "", "", "", "", "", "", "", "", "", "", "", ""];
+function blankTableRow() {
+  return ["", "", ""];
 }
 
 function dayFlightsText(day) {
   const value = day?.flights;
   if (!value) return "";
   return (Array.isArray(value) ? value.filter(Boolean) : [value]).join("; ").trim();
-}
-
-// Same formula as getFieldValue()'s "fileName" case in src/portalBuilder.js -
-// duplicated here since app.js (browser) and portalBuilder.js (Node) don't
-// share code in this project.
-function quotationFileNameValue(itinerary) {
-  if (itinerary.fileName) return itinerary.fileName;
-  const customerType = (itinerary.customerType || "b2c").toLowerCase();
-  const client = itinerary.lastName || itinerary.clientName || "";
-  const agency = itinerary.agencyName || "";
-
-  if (customerType === "b2b") {
-    const parts = ["JTG"];
-    if (agency) parts.push(agency);
-    if (client) parts.push(client);
-    return parts.join(" ").trim();
-  }
-
-  const parts = ["WT"];
-  if (client) parts.push(client);
-  return parts.join(" - ").trim();
 }
 
 function formatDayLabel(itinerary, dayIndex) {
@@ -665,22 +620,6 @@ function formatDayLabel(itinerary, dayIndex) {
   const weekday = parsedDate.toLocaleDateString("en-US", { weekday: "long" });
   const month = parsedDate.toLocaleDateString("en-US", { month: "short" });
   return `Day ${number}: ${weekday}, ${month} ${parsedDate.getDate()}`;
-}
-
-function formatShortDate(isoDate) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate || "")) return "";
-  const parsedDate = new Date(`${isoDate}T00:00:00`);
-  const day = String(parsedDate.getDate()).padStart(2, "0");
-  const month = parsedDate.toLocaleDateString("en-US", { month: "short" });
-  const year = String(parsedDate.getFullYear()).slice(-2);
-  return `${day}-${month}-${year}`;
-}
-
-function nightsBetween(startDate, endDate) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate || "") || !/^\d{4}-\d{2}-\d{2}$/.test(endDate || "")) return "";
-  const start = new Date(`${startDate}T00:00:00`);
-  const end = new Date(`${endDate}T00:00:00`);
-  return String(Math.round((end - start) / 86400000));
 }
 
 // TSV has no standard quoting mechanism the way CSV does, so a literal tab

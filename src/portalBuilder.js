@@ -93,7 +93,10 @@ async function fillSpec(scope, spec, value, label) {
   if (!text) return false;
 
   const locator = await locatorFromSpec(scope, spec);
-  if (!locator) return false;
+  if (!locator) {
+    if (spec) warn(`[portalBuilder] Could not resolve locator for ${label}`);
+    return false;
+  }
 
   await locator.waitFor({ state: "visible", timeout: 5000 });
 

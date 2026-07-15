@@ -540,11 +540,24 @@ async function copyQuotationTable() {
   renderItinerary(parsedItinerary);
 
   const rows = buildQuotationTableRows(parsedItinerary);
-  // Tab-separated, not comma-separated: this is the same clipboard format
-  // Excel/Google Sheets use internally when you copy a range of cells, so
-  // pasting this text lands as a proper table instead of one comma-joined
-  // string per cell.
-  await navigator.clipboard.writeText(rowsToTsv(rows));
+  // Tab-separated plain text is the same clipboard format Excel/Google
+  // Sheets use internally when you copy a range of cells, so pasting it
+  // lands as a proper table instead of one comma-joined string per cell.
+  // Writing an HTML table alongside it (with the Date column bolded) is
+  // what actually carries that bold formatting through the paste - plain
+  // text has no way to express it at all.
+  const tsvText = rowsToTsv(rows);
+  try {
+    const item = new ClipboardItem({
+      "text/plain": new Blob([tsvText], { type: "text/plain" }),
+      "text/html": new Blob([rowsToHtmlTable(rows)], { type: "text/html" })
+    });
+    await navigator.clipboard.write([item]);
+  } catch (error) {
+    // Some environments don't support multi-format clipboard writes - still
+    // pastes as a table, just without the bolded Date column.
+    await navigator.clipboard.writeText(tsvText);
+  }
   setMessage("Quotation table copied - paste it directly into Excel or Sheets.");
 }
 
@@ -564,11 +577,11 @@ function buildQuotationTableRows(itinerary) {
     let dateAlreadyShown = false;
 
     if (stayIndex === 0) {
-      const flightText = dayFlightsText(itinerary.days[stay.startIndex]);
-      if (flightText) {
-        rows.push([dateLabel, "Flight", flightText]);
-        rows.push(blankTableRow());
-      }
+      // Always include the arrival Flight row, even with no parsed flight
+      // text to put in Activity Detail - it's a placeholder to fill in by
+      // hand, not something to skip just because we don't have the detail.
+      rows.push([dateLabel, "Flight", dayFlightsText(itinerary.days[stay.startIndex])]);
+      rows.push(blankTableRow());
     } else {
       const previousStay = stays[stayIndex - 1];
       const transfer = itinerary.days[previousStay.startIndex]?.transferAfter;
@@ -592,11 +605,9 @@ function buildQuotationTableRows(itinerary) {
     rows.push(blankTableRow());
   });
 
+  // Always include the departure Flight row too, for the same reason.
   const lastDayIndex = itinerary.days.length - 1;
-  const departureFlightText = dayFlightsText(itinerary.days[lastDayIndex]);
-  if (departureFlightText) {
-    rows.push([formatDayLabel(itinerary, lastDayIndex), "Flight", departureFlightText]);
-  }
+  rows.push([formatDayLabel(itinerary, lastDayIndex), "Flight", dayFlightsText(itinerary.days[lastDayIndex])]);
 
   return rows;
 }
@@ -631,6 +642,18 @@ function tsvField(value) {
 
 function rowsToTsv(rows) {
   return rows.map((row) => row.map(tsvField).join("\t")).join("\n");
+}
+
+// The Date column (first cell of each row) rendered bold - this is what
+// actually carries through as bold formatting when pasted into Excel/Sheets,
+// since the plain-text clipboard entry has no way to express it at all.
+function rowsToHtmlTable(rows) {
+  const trs = rows.map((row) => {
+    const [dateCell, ...rest] = row;
+    const cells = [`<td><b>${escapeHtml(dateCell)}</b></td>`, ...rest.map((cell) => `<td>${escapeHtml(cell)}</td>`)];
+    return `<tr>${cells.join("")}</tr>`;
+  });
+  return `<table><tbody>${trs.join("")}</tbody></table>`;
 }
 
 async function refreshStatus() {

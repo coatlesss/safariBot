@@ -465,7 +465,11 @@ function compactMentionPart(value) {
 
 async function fillFields(page, fields, itinerary) {
   for (const [key, spec] of Object.entries(fields || {})) {
-    const value = getFieldValue(itinerary, key);
+    // A field can pin its value directly in config (spec.constantValue)
+    // instead of deriving it from the itinerary - for fields that should
+    // always get the same fixed value on every draft (e.g. a standing
+    // "Info Page" selection), rather than something itinerary-specific.
+    const value = spec?.constantValue ?? getFieldValue(itinerary, key);
     await fillSpec(page, spec, value, key);
   }
 }

@@ -11,7 +11,8 @@
     "agencyName": { "label": "Agency" },
     "startDate": { "label": "Start Date" },
     "endDate": { "label": "End Date" },
-    "summaryNotes": { "label": "Notes" }
+    "summaryNotes": { "label": "Notes" },
+    "afterCoverPage": { "label": "After the Cover Page", "constantValue": "Your Info Page Name" }
   },
   "days": {
     "addDayButton": { "role": "button", "name": "Add Day" },

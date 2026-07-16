@@ -52,6 +52,10 @@ templateButton.addEventListener("click", loadTemplate);
 sampleButton.addEventListener("click", loadSample);
 clearButton.addEventListener("click", () => {
   input.value = "";
+  lastNameInput.value = "";
+  lastNameInput.classList.remove("field-invalid");
+  startDateInput.value = "";
+  startDateInput.classList.remove("field-invalid");
   parsedItinerary = null;
   renderItinerary(null);
   setMessage("");

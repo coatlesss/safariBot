@@ -3,8 +3,7 @@
 This guide is for whoever ends up owning this tool after the person who built
 it moves on. You do not need to know how to write code. The realistic way to
 maintain and improve this program is to **describe what you want in plain
-English to an AI coding assistant** (like Claude Code, which is what built
-this entire app) and let it make the change for you. This document explains
+English to an AI coding assistant** (like Claude Code) and let it make the change for you. This document explains
 how that actually works day-to-day, plus the handful of things worth knowing
 yourself.
 
@@ -55,7 +54,7 @@ mention them if relevant:
 
 | Location | What it is |
 |---|---|
-| `config/portal.json` | The real, private settings this app uses to find buttons/fields on the actual Safari Portal website. **Never shared publicly** - it's excluded from the public GitHub repo on purpose. If the Safari Portal's website changes and the automation starts failing on a specific field, this file is usually what needs updating. |
+| `config/portal.json` | The settings this app uses to find buttons on the safari portal website. If the website changes at all this needs to be updated. |
 | `data/*.csv` | The reference spreadsheets (areas, properties, transfer routes) the app uses for autocomplete and matching. **You can update these yourself** through the app's "Manage Data" button - no AI/code needed, just upload a CSV export with the same columns. |
 | `web/` | Everything about what you see on screen - the layout, buttons, and behavior of the app window. |
 | `src/` | The behind-the-scenes logic: parsing itineraries, driving the browser automation, the local server. |

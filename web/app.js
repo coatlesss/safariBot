@@ -1243,7 +1243,13 @@ function transferForRoute(fromLocation, toLocation, segment) {
   const fromArea = transferAreaLabel(fromLocation);
   const toArea = transferAreaLabel(toLocation);
   const segmentLabel = transferSegmentLabel(segment);
-  if (!fromArea || !toArea || !segmentLabel) return null;
+  // Without both areas resolved there's nothing to name or match a route by -
+  // rather than skip the transfer row entirely, fall back to a generic
+  // "@transfer" mention so there's still something to fill in and correct by
+  // hand, instead of a silent gap in the timeline.
+  if (!fromArea || !toArea || !segmentLabel) {
+    return { name: "Transfer", tag: "@transfer", segment: segmentLabel || "Normal", generated: true, fallback: true };
+  }
 
   const name = `Transfer ${fromArea} to ${toArea}`;
   return {

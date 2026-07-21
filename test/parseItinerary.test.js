@@ -427,6 +427,23 @@ Day 1	Osaka	Arrival and free evening
   assert.equal(plan[4].transferTag, "");
 });
 
+test("falls back to a generic @transfer tag when a stay's location can't be resolved", () => {
+  // A manually added stay (e.g. via the Hotel Setup "+ Add hotel stay"
+  // button) can start out with no location at all - the transfer to/from it
+  // shouldn't just be silently skipped, it should still get a placeholder
+  // tag that can be corrected by hand.
+  const days = [
+    { number: 1, date: "2026-08-12", location: "Osaka", accommodation: "Zentis Osaka" },
+    { number: 2, date: "2026-08-13", location: "", accommodation: "New Hotel" }
+  ];
+
+  const plan = buildHotelTimelinePlan(days, { includeArrival: false, includeDeparture: false });
+
+  assert.equal(plan.length, 2);
+  assert.equal(plan[0].transferTag, "@transfer");
+  assert.equal(plan[1].transferTag, "");
+});
+
 test("adds arrival/departure boundary rows by default, respecting per-trip opt-out", () => {
   const result = parseHotelItinerary(`
 Day 1	Osaka	Arrival and free evening

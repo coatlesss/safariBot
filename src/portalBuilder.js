@@ -418,7 +418,14 @@ function ensureTransferAfterForStays(stays) {
 
     const fromArea = routeAreaForStay(stay);
     const toArea = routeAreaForStay(nextStay);
-    if (!fromArea || !toArea) continue;
+    if (!fromArea || !toArea) {
+      // Without both areas resolved there's nothing to name or match a route
+      // by - rather than skip the transfer row entirely, fall back to a
+      // generic "@transfer" mention so it still gets attempted and can be
+      // corrected by hand, instead of a silent gap in the timeline.
+      stay.firstDay.transferAfter = { name: "Transfer", tag: "@transfer", segment: "Normal", fallback: true };
+      continue;
+    }
 
     const segment = "Normal";
     const name = `Transfer ${fromArea} to ${toArea}`;

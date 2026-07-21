@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { normalizeDate, parseHotelItinerary, parseItinerary } = require("../src/parseItinerary");
-const { buildHotelTimelinePlan } = require("../src/portalBuilder");
+const { buildHotelTimelinePlan, getHotelStays } = require("../src/portalBuilder");
 
 test("normalizes common date formats", () => {
   assert.equal(normalizeDate("2026-8-2"), "2026-08-02");
@@ -154,6 +154,225 @@ Day 1-5	Heda-Ito	Own arrangement
   assert.equal(result.days[14].accommodation, "Hotel TBD - Tokyo");
 });
 
+test("keeps 'Day N-M - Location' / Accommodation: pairs from being swallowed as table rows", () => {
+  // A single space after the day range ("Day 1-4 - Fukuoka") looks similar to a
+  // tab-separated table row, but it's actually a heading for the following
+  // "Accommodation:" line. If parseHotelTable mistakes it for tabular input,
+  // it only picks up whichever headings happen to match and drops every
+  // other destination in the itinerary.
+  const result = parseHotelItinerary(`
+Day 1-4 - Fukuoka
+Accommodation: Eigen verblijf
+
+Day 4-6 Nagasaki
+Accommodation: Indigo Nagasaki Glover Street
+
+Day 6-8: Kumamoto
+Accommodation: Tudzura
+`);
+
+  // Day 1-4 (4 entries) + Day 4-6 (3 entries) + Day 6-8 (3 entries) = 10; the
+  // shared transition days (4 and 6) each appear twice, once for the stay
+  // that's ending and once for the stay that's starting.
+  assert.equal(result.days.length, 10);
+  assert.equal(result.days[0].location, "Fukuoka");
+  assert.equal(result.days[0].accommodation, "Eigen verblijf");
+  assert.equal(result.days[4].location, "Nagasaki");
+  assert.equal(result.days[4].accommodation, "Indigo Nagasaki Glover Street");
+  assert.equal(result.days[9].location, "Kumamoto");
+  assert.equal(result.days[9].accommodation, "Tudzura");
+});
+
+test("parses a 'one cell per line' vertical table paste for location and length of stay, leaving the hotel as a placeholder", () => {
+  // Copying a Word/Excel itinerary table into chat turns each cell into its
+  // own paragraph, so every value lands on its own line with blank lines as
+  // separators instead of tabs. Everything past Route (Program, Hotel,
+  // Rooms, Meals, ...) can't be told apart reliably from blank-line counts
+  // alone, so only Day/Date/Route are trusted; the accommodation is left as
+  // a "Hotel TBD - <location>" placeholder for someone to fill in by hand,
+  // same as the plain tab-separated table format already does.
+  const result = parseHotelItinerary(`
+Day
+
+Date
+
+Route I
+
+Program (activities)
+
+Hotels
+
+
+1
+
+09.10.26
+
+Fukuoka
+
+Eigen verblijf
+
+
+
+2
+
+10.10.26
+
+Fukuoka - Nagasaki
+
+IC-card 2,000 yen
+Pick-up rental car
+
+Indigo Nagasaki Glover Street
+
+3
+
+11.10.26
+
+
+
+
+4
+
+12.10.26
+
+Nagasaki
+
+Indigo Nagasaki Glover Street
+`);
+
+  assert.equal(result.days.length, 3);
+  assert.equal(result.days[0].number, 1);
+  assert.equal(result.days[0].date, "2026-10-09");
+  assert.equal(result.days[0].location, "Fukuoka");
+  assert.equal(result.days[0].accommodation, "Hotel TBD - Fukuoka");
+  // A "Fukuoka - Nagasaki" route is a transfer day, not a place of its own -
+  // the traveler only stays overnight at the last leg (Nagasaki).
+  assert.equal(result.days[1].location, "Nagasaki");
+  assert.equal(result.days[1].accommodation, "Hotel TBD - Nagasaki");
+  // Day 3 has a blank Route/Program/Hotel cell (a gap in the source table)
+  // so it's dropped, same as any other format's accommodation-less days.
+  assert.equal(result.days[2].number, 4);
+  assert.equal(result.days[2].location, "Nagasaki");
+  assert.equal(result.startDate, "2026-10-09");
+  assert.equal(result.endDate, "2026-10-12");
+});
+
+test("collapses a multi-leg vertical-table route to its last leg so it merges with the destination's stay", () => {
+  const result = parseHotelItinerary(`
+Day
+
+Date
+
+Route
+
+Program (activities)
+
+Hotel
+
+1
+
+22.10.26
+
+Kuju Mountains - Fukuoka - Miyajima
+
+Drop-off rental car
+
+Miyajima Kinsuikan
+
+2
+
+23.10.26
+
+Miyajima
+
+Free day
+
+Miyajima Kinsuikan
+`);
+
+  assert.equal(result.days.length, 2);
+  assert.equal(result.days[0].location, "Miyajima");
+  assert.equal(result.days[1].location, "Miyajima");
+
+  const stays = getHotelStays(result.days);
+  assert.equal(stays.length, 1);
+  assert.equal(stays[0].startDate, "2026-10-22");
+  assert.equal(stays[0].endDate, "2026-10-23");
+});
+
+test("groups consecutive same-location vertical-table days into one stay, to read off nights per location", () => {
+  const result = parseHotelItinerary(`
+Day
+
+Date
+
+Route
+
+Program (activities)
+
+Hotel
+
+Rooms
+
+Meals
+
+1
+
+06.04.27
+
+Zao Onsen
+
+Bus Yamagata - Zao Onsen
+
+Shinzanso Takamiya
+
+Maisonette-Sansui
+
+HB
+
+2
+
+07.04.27
+
+Zao Onsen
+
+Free day
+
+Shinzanso Takamiya
+
+Maisonette-Sansui
+
+HB
+
+3
+
+08.04.27
+
+Sendai
+
+Bus Zao Onsen - Sendai
+
+Some Sendai Hotel
+
+Twin Room
+
+BB
+`);
+
+  assert.equal(result.days.length, 3);
+  assert.equal(result.days[0].location, "Zao Onsen");
+  assert.equal(result.days[1].location, "Zao Onsen");
+  assert.equal(result.days[2].location, "Sendai");
+
+  const stays = getHotelStays(result.days);
+  assert.equal(stays.length, 2);
+  assert.equal(stays[0].firstDay.location, "Zao Onsen");
+  assert.equal(stays[0].startDate, "2027-04-06");
+  assert.equal(stays[0].endDate, "2027-04-07");
+  assert.equal(stays[1].firstDay.location, "Sendai");
+  assert.equal(stays[1].startDate, "2027-04-08");
+});
+
 test("assigns hotel dates from a selected start date", () => {
   const result = parseHotelItinerary(`
 Day 1-2	Heda-Ito	Own arrangement
@@ -168,6 +387,21 @@ Day 1-2	Heda-Ito	Own arrangement
   assert.equal(result.days[1].date, "2026-04-11");
   assert.equal(result.days[2].date, "2026-04-12");
   assert.equal(result.days[2].accommodation, "Hotel TBD - Kyoto");
+});
+
+test("prefers pasted itinerary dates over a previously selected start date", () => {
+  const result = parseHotelItinerary(`
+Start: 2026-08-12
+End: 2026-08-19
+
+Day 1-2	Osaka	Arrival and free evening
+3	Kyoto	Shinkansen Osaka-Kyoto
+4	Flight back
+`, { startDate: "2026-04-10" });
+
+  assert.equal(result.startDate, "2026-08-12");
+  assert.equal(result.endDate, "2026-08-14");
+  assert.equal(result.days[0].date, "2026-08-12");
 });
 
 test("plans repeated Japan hotel and transfer rows for longer routes", () => {

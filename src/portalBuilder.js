@@ -1728,6 +1728,7 @@ async function killBrowser(browser) {
 module.exports = {
   buildPortalDraft,
   buildHotelTimelinePlan,
+  getHotelStays,
   closeOpenDraftBrowsers,
   openPortalPage,
   _getDebugLastPage: () => _debugLastPage

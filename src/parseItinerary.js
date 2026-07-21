@@ -31,6 +31,15 @@ function normalizeDate(value, fallbackYear) {
   const iso = text.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
   if (iso) return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
 
+  // Dot-separated dates are always day.month.year (European convention), unlike
+  // the slash/dash form below which is treated as month-first.
+  const dot = text.match(/\b(\d{1,2})\.(\d{1,2})\.(\d{2,4})\b/);
+  if (dot) {
+    const year = expandYear(dot[3]);
+    if (!year) return text;
+    return `${year}-${dot[2].padStart(2, "0")}-${dot[1].padStart(2, "0")}`;
+  }
+
   const slash = text.match(/\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b/);
   if (slash) {
     const year = slash[3] ? expandYear(slash[3]) : fallbackYear;
@@ -232,15 +241,142 @@ function parseItinerary(text) {
   return result;
 }
 
+// A cell that spans several lines (a Word "Shift+Enter" soft break inside one
+// table cell) shows up as consecutive non-blank lines; a blank line marks the
+// boundary between cells. This turns the raw lines of one day's block into
+// that ordered list of cell contents.
+function splitIntoRuns(lines) {
+  const runs = [];
+  let current = [];
+  for (const line of lines) {
+    if (line.trim() === "") {
+      if (current.length) {
+        runs.push(current.join(" ").trim());
+        current = [];
+      }
+    } else {
+      current.push(line.trim());
+    }
+  }
+  if (current.length) runs.push(current.join(" ").trim());
+  return runs;
+}
+
+// A Route cell like "Fukuoka - Nagasaki" (or "Kuju Mountains - Fukuoka -
+// Miyajima") describes a transfer day, not a place of its own - the traveler
+// only actually stays overnight at the last leg, so that's the day's real
+// location.
+function overnightLocation(routeText) {
+  const legs = routeText.split(/\s+-\s+/).map((leg) => leg.trim()).filter(Boolean);
+  const last = legs.length ? legs[legs.length - 1] : routeText.trim();
+  // A route cell that itself spans two soft-broken lines (e.g. a flight leg
+  // followed by its arrival city repeated on its own line) joins with a
+  // space rather than a blank-line boundary, which can echo the same word
+  // twice ("... Tokyo" + "Tokyo" -> "Tokyo Tokyo").
+  return last.replace(/\b(\S+)(\s+\1)+\b/gi, "$1");
+}
+
+function looksLikeVerticalHotelTable(lines) {
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    return trimmed.toLowerCase() === "day";
+  }
+  return false;
+}
+
+// Parses a "one cell per line" table paste - copying a Word/Excel itinerary
+// table into chat turns every cell into its own paragraph, with a header row
+// of Day / Date / Route [/ Program / Hotel(s) / Rooms / Meals] naming the
+// columns. Cells after Route can't be told apart reliably (an empty cell and
+// an ordinary paragraph break both collapse to one blank line, and a single
+// cell can itself hold several paragraphs), so this only pulls out what's
+// unambiguous - which day stays where, and for how long - and leaves the
+// hotel as a placeholder for someone to fill in by hand afterward, the same
+// way the plain tab-separated table format already does.
+function parseVerticalHotelTable(text) {
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  if (!looksLikeVerticalHotelTable(lines)) return null;
+
+  let i = 0;
+  while (i < lines.length && lines[i].trim() === "") i++;
+  i += 1; // the "Day" header line itself
+
+  while (i < lines.length) {
+    while (i < lines.length && lines[i].trim() === "") i++;
+    if (i >= lines.length) break;
+    if (/^\d+$/.test(lines[i].trim())) break;
+    i += 1; // remaining header cells (Date, Route, Program, Hotel(s), ...)
+  }
+
+  const days = [];
+
+  while (i < lines.length) {
+    while (i < lines.length && lines[i].trim() === "") i++;
+    if (i >= lines.length) break;
+    const cell = lines[i].trim();
+    if (!/^\d+$/.test(cell)) {
+      i += 1;
+      continue;
+    }
+    const dayNumber = Number(cell);
+    i += 1;
+
+    // Real cell content (dates, routes, hotel names) never appears as a bare
+    // digit-only line, so the next one always marks the start of the next
+    // row - this also keeps things from breaking if a paste gets duplicated
+    // or restarts partway through, instead of one row swallowing the rest.
+    const blockLines = [];
+    while (i < lines.length) {
+      if (/^\d+$/.test(lines[i].trim())) break;
+      blockLines.push(lines[i]);
+      i += 1;
+    }
+
+    const runs = splitIntoRuns(blockLines);
+    const dateRun = runs[0] || "";
+    const location = runs[1] ? overnightLocation(runs[1]) : "";
+
+    const day = emptyDay(dayNumber);
+    day.date = dateRun ? normalizeDate(dateRun, "") : "";
+    day.location = location;
+    if (location && !isNonHotelLocation(location)) day.accommodation = placeholderHotel(location);
+    days.push(day);
+  }
+
+  return days;
+}
+
 function parseHotelItinerary(text, options = {}) {
   const itinerary = parseItinerary(text);
   const selectedStartDate = normalizeSelectedStartDate(options.startDate);
 
+  const verticalDays = parseVerticalHotelTable(text);
+  if (verticalDays && verticalDays.length) {
+    itinerary.summaryNotes = [];
+    itinerary.days = verticalDays
+      .filter((day) => Boolean(day.accommodation))
+      .map((day) => ({
+        number: day.number,
+        date: day.date,
+        location: day.location,
+        accommodation: day.accommodation,
+        activities: [],
+        transfers: [],
+        flights: [],
+        meals: [],
+        notes: []
+      }));
+    itinerary.startDate = itinerary.days[0]?.date || selectedStartDate || "";
+    itinerary.endDate = itinerary.days[itinerary.days.length - 1]?.date || itinerary.startDate || "";
+    return itinerary;
+  }
+
   const tableDays = parseHotelTable(text, itinerary);
   if (tableDays.length) {
     itinerary.summaryNotes = [];
-    itinerary.days = assignDates(tableDays, selectedStartDate || itinerary.startDate);
-    itinerary.startDate = selectedStartDate || itinerary.startDate || itinerary.days[0]?.date || "";
+    itinerary.days = assignDates(tableDays, itinerary.startDate || selectedStartDate);
+    itinerary.startDate = itinerary.startDate || selectedStartDate || itinerary.days[0]?.date || "";
     itinerary.endDate = itinerary.days[itinerary.days.length - 1]?.date || itinerary.endDate || "";
     return itinerary;
   }
@@ -262,8 +398,8 @@ function parseHotelItinerary(text, options = {}) {
     }));
 
   if (itinerary.days.length) {
-    itinerary.days = assignDates(itinerary.days, selectedStartDate || itinerary.startDate);
-    itinerary.startDate = selectedStartDate || itinerary.startDate || itinerary.days[0].date || "";
+    itinerary.days = assignDates(itinerary.days, itinerary.startDate || selectedStartDate);
+    itinerary.startDate = itinerary.startDate || selectedStartDate || itinerary.days[0].date || "";
     itinerary.endDate = itinerary.days[itinerary.days.length - 1].date || itinerary.endDate || "";
     return itinerary;
   }
@@ -283,8 +419,8 @@ function parseHotelItinerary(text, options = {}) {
     });
   }
 
-  itinerary.days = assignDates(itinerary.days, selectedStartDate || itinerary.startDate);
-  itinerary.startDate = selectedStartDate || itinerary.startDate || itinerary.days[0]?.date || "";
+  itinerary.days = assignDates(itinerary.days, itinerary.startDate || selectedStartDate);
+  itinerary.startDate = itinerary.startDate || selectedStartDate || itinerary.days[0]?.date || "";
   itinerary.endDate = itinerary.days[itinerary.days.length - 1]?.date || itinerary.endDate || "";
 
   return itinerary;
@@ -318,8 +454,14 @@ function parseHotelTable(text, baseItinerary) {
   return days;
 }
 
+// Only a genuine spreadsheet-style paste (columns separated by a tab or
+// multiple spaces) should be treated as a hotel table row. A single space
+// after the day number also matches free-text headings like "Day 1-4 -
+// Fukuoka" that are meant to be parsed as a "Day N-M" heading followed by
+// its own "Accommodation:" line, so requiring the wider gap here keeps
+// those two input styles from being confused with each other.
 function parseTableRow(line) {
-  const match = line.match(/^(?:day\s*)?(\d+)(?:\s*[-–]\s*(\d+))?\s+(.+)$/i);
+  const match = line.match(/^(?:day\s*)?(\d+)(?:\s*[-–]\s*(\d+))?(?:\t+|[ ]{2,})(.+)$/i);
   if (!match) return null;
 
   const start = Number(match[1]);

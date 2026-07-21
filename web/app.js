@@ -163,11 +163,11 @@ function fillLastNameFromClientName(itinerary) {
 }
 
 // Same idea for the trip start date - itineraries often already state it
-// (a "Start: ..." line, or just the first day's own date), so fill the
-// Trip Starts box from what the parser found instead of making employees
-// re-enter it, but never clobber a date already set in the box.
+// (a "Start: ..." line, or just the first day's own date), so keep the
+// Trip Starts box aligned with the latest parse instead of leaving a date
+// behind from the previous itinerary.
 function fillStartDateFromParsed(itinerary) {
-  if (startDateInput.value || !/^\d{4}-\d{2}-\d{2}$/.test(itinerary.startDate || "")) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(itinerary.startDate || "")) return;
   startDateInput.value = itinerary.startDate;
   startDateInput.classList.remove("field-invalid");
 }
@@ -721,19 +721,20 @@ function renderItinerary(itinerary) {
     summaryItem("End", itinerary.endDate)
   ].join("");
 
+  // Render the Hotel Setup panel (and its "+ Add hotel stay" button) even
+  // with zero days, so deleting every stay doesn't also delete the only way
+  // to add one back.
+  renderHotelAreaControls(itinerary);
+  bindHotelAreaControls(itinerary);
+
   if (!itinerary.days.length) {
     days.innerHTML = `<div class="empty-state">No days were detected. Try headings like Day 1, Day 2, and so on.</div>`;
-    if (hotelAreasContainer) hotelAreasContainer.innerHTML = "";
     return;
   }
 
-  // render per-hotel area selectors
-  renderHotelAreaControls(itinerary);
   // compute effective area tag for each day (inheritance)
   const perDayAreas = computePerDayAreas(itinerary);
   days.innerHTML = itinerary.days.map((d, i) => renderDay(d, i, perDayAreas[i])).join("");
-  // attach listeners for hotel area selects
-  bindHotelAreaControls(itinerary);
 }
 
 function renderDay(day, index, area) {
@@ -871,42 +872,42 @@ function renderHotelAreaControls(itinerary) {
   if (!hotelAreasContainer) return;
   const stays = getHotelStays(itinerary);
 
-  if (!stays.length) {
-    hotelAreasContainer.innerHTML = "";
-    return;
-  }
-
   hotelAreasContainer.innerHTML = `
     <div class="hotel-areas-header"><strong>Hotel Setup</strong></div>
-    ${stays.map((stay) => {
-      const hotels = getStayHotelOptions(stay);
-      const hasAlternates = hotels.length > 1;
-      return `
-      <div class="hotel-setup-row" data-stay-key="${escapeHtml(stay.key)}">
-        <div class="hotel-setup-header">
-          <span class="hotel-setup-label">${escapeHtml(stay.label)}</span>
-          <div class="autocomplete hotel-setup-area">
-            <input type="text" class="hotel-area-input" placeholder="Inherit area" autocomplete="off">
-            <div class="autocomplete-list hidden"></div>
-          </div>
-        </div>
-        <div class="stay-hotel-options">
-          ${hotels.map((hotel, hotelIndex) => `
-            <div class="stay-hotel-option ${hasAlternates ? "" : "stay-hotel-option-single"}" data-hotel-index="${hotelIndex}">
-              <div class="autocomplete">
-                <input type="text" class="hotel-property-input" placeholder="Match property" autocomplete="off" value="${escapeHtml(hotel.name)}">
-                <div class="autocomplete-list hidden"></div>
-              </div>
-              <input type="text" class="hotel-option-rooms" placeholder="Rooms (optional)" autocomplete="off" value="${escapeHtml(hotel.rooms)}">
-              ${hasAlternates ? `<button type="button" class="hotel-option-remove small" aria-label="Remove hotel option">Remove</button>` : ""}
-            </div>
-          `).join("")}
-        </div>
-        <button type="button" class="hotel-option-add link-button">+ Add alternate hotel</button>
-      </div>
-    `;
-    }).join('')}
+    ${stays.length ? stays.map((stay) => renderHotelSetupRow(stay)).join("") : `<div class="hotel-setup-empty muted">No hotel stays yet.</div>`}
+    <button type="button" id="addHotelStayButton" class="link-button">+ Add hotel stay</button>
     ${renderTransferControls(stays, computePerDayAreas(itinerary))}
+  `;
+}
+
+function renderHotelSetupRow(stay) {
+  const hotels = getStayHotelOptions(stay);
+  const hasAlternates = hotels.length > 1;
+  return `
+    <div class="hotel-setup-row" data-stay-key="${escapeHtml(stay.key)}">
+      <div class="hotel-setup-header">
+        <span class="hotel-setup-label">${escapeHtml(stay.label)}</span>
+        <input type="text" class="hotel-location-input" placeholder="Location" autocomplete="off" value="${escapeHtml(stay.location)}">
+        <div class="autocomplete hotel-setup-area">
+          <input type="text" class="hotel-area-input" placeholder="Inherit area" autocomplete="off">
+          <div class="autocomplete-list hidden"></div>
+        </div>
+        <button type="button" class="hotel-stay-remove small" aria-label="Remove this hotel stay">Remove stay</button>
+      </div>
+      <div class="stay-hotel-options">
+        ${hotels.map((hotel, hotelIndex) => `
+          <div class="stay-hotel-option ${hasAlternates ? "" : "stay-hotel-option-single"}" data-hotel-index="${hotelIndex}">
+            <div class="autocomplete">
+              <input type="text" class="hotel-property-input" placeholder="Match property" autocomplete="off" value="${escapeHtml(hotel.name)}">
+              <div class="autocomplete-list hidden"></div>
+            </div>
+            <input type="text" class="hotel-option-rooms" placeholder="Rooms (optional)" autocomplete="off" value="${escapeHtml(hotel.rooms)}">
+            ${hasAlternates ? `<button type="button" class="hotel-option-remove small" aria-label="Remove hotel option">Remove</button>` : ""}
+          </div>
+        `).join("")}
+      </div>
+      <button type="button" class="hotel-option-add link-button">+ Add alternate hotel</button>
+    </div>
   `;
 }
 
@@ -981,6 +982,35 @@ function bindHotelAreaControls(itinerary) {
       applyAreaValue
     );
 
+    const locationInput = rowEl.querySelector(".hotel-location-input");
+    locationInput.addEventListener("change", (e) => {
+      const value = e.target.value.trim();
+      for (let index = stay.startIndex; index <= stay.endIndex; index += 1) {
+        itinerary.days[index].location = value;
+      }
+      // Location is part of a stay's identity key, so changing it mints a new
+      // key - carry over any hotel/area edits already made for this stay so
+      // they aren't silently dropped.
+      const movedStay = getHotelStays(itinerary).find((candidate) => candidate.startIndex === stay.startIndex);
+      if (movedStay && movedStay.key !== stayKey) {
+        if (hotelOptionsMap[stayKey]) hotelOptionsMap[movedStay.key] = hotelOptionsMap[stayKey];
+        if (hotelAreaMap[stayKey]) hotelAreaMap[movedStay.key] = hotelAreaMap[stayKey];
+        delete hotelOptionsMap[stayKey];
+        delete hotelAreaMap[stayKey];
+      }
+      parsedItinerary = withCurrentMetadata(itinerary);
+      renderItinerary(parsedItinerary);
+    });
+
+    const removeStayButton = rowEl.querySelector(".hotel-stay-remove");
+    removeStayButton.addEventListener("click", () => {
+      itinerary.days.splice(stay.startIndex, stay.endIndex - stay.startIndex + 1);
+      delete hotelOptionsMap[stayKey];
+      delete hotelAreaMap[stayKey];
+      parsedItinerary = withCurrentMetadata(itinerary);
+      renderItinerary(parsedItinerary);
+    });
+
     rowEl.querySelectorAll(".stay-hotel-option").forEach((hotelEl) => {
       const hotelIndex = Number(hotelEl.getAttribute("data-hotel-index"));
       const propertyInput = hotelEl.querySelector(".hotel-property-input");
@@ -1034,6 +1064,37 @@ function bindHotelAreaControls(itinerary) {
       renderItinerary(parsedItinerary);
     });
   });
+
+  const addStayButton = hotelAreasContainer.querySelector("#addHotelStayButton");
+  if (addStayButton) {
+    addStayButton.addEventListener("click", () => {
+      const lastDay = itinerary.days[itinerary.days.length - 1];
+      itinerary.days.push({
+        number: (lastDay?.number || itinerary.days.length) + 1,
+        date: lastDay?.date ? addOneDay(lastDay.date) : "",
+        location: "",
+        accommodation: "New Hotel",
+        activities: [],
+        transfers: [],
+        flights: [],
+        meals: [],
+        notes: []
+      });
+      parsedItinerary = withCurrentMetadata(itinerary);
+      renderItinerary(parsedItinerary);
+    });
+  }
+}
+
+function addOneDay(dateStr) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || "")) return "";
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + 1));
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0")
+  ].join("-");
 }
 
 // Compute effective area for each day. Priority: explicit per-hotel override,

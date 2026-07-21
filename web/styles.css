@@ -490,7 +490,7 @@ textarea {
 
 .hotel-setup-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.6fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(120px, 0.7fr) minmax(120px, 0.7fr) auto;
   align-items: center;
   gap: 8px;
 }
@@ -501,9 +501,29 @@ textarea {
   overflow-wrap: anywhere;
 }
 
-.hotel-setup-area input {
+.hotel-setup-area input,
+.hotel-location-input {
   min-height: 32px;
   font-size: 13px;
+}
+
+.hotel-location-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text);
+  padding: 0 10px;
+}
+
+.hotel-stay-remove {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+.hotel-setup-empty {
+  font-size: 13px;
+  padding: 4px 0;
 }
 
 .hotel-area-row span {

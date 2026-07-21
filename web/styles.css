@@ -168,7 +168,8 @@ h2 {
 }
 
 .pane {
-  min-height: calc(100vh - 124px);
+  height: calc(100vh - 124px);
+  overflow-y: auto;
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -580,9 +581,6 @@ textarea {
 
 .days-list {
   display: grid;
-  max-height: calc(100vh - 280px);
-  overflow: auto;
-  padding-right: 4px;
 }
 
 .day-card {
@@ -657,15 +655,12 @@ textarea {
   }
 
   .pane {
-    min-height: auto;
+    height: auto;
+    overflow-y: visible;
   }
 
   textarea {
     min-height: 300px;
-  }
-
-  .days-list {
-    max-height: none;
   }
 }
 

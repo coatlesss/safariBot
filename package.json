@@ -1,6 +1,6 @@
 {
   "name": "safari-bot",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "private": true,
   "description": "Local Playwright helper for turning pasted safari itineraries into Safari Portal drafts.",
   "main": "desktop/main.js",
